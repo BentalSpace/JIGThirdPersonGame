@@ -1,0 +1,64 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class CamCtrl : MonoBehaviour
+{
+    Transform target;
+    float xMove;
+    float yMove;
+
+    [SerializeField, Tooltip("Ä«¸Þ¶ó¿Í Å¸°ÙÀÇ °Å¸®")]
+    float distance;
+
+    [SerializeField, Tooltip("ÁÂ¿ì·Î Èçµå´Â ¸¶¿ì½º ¹Î°¨µµ")]
+    float ySensitivity;
+    [SerializeField, Tooltip("À§¾Æ·¡·Î Èçµå´Â ¸¶¿ì½º ¹Î°¨µµ")]
+    float xSensitivity;
+
+    void Awake() {
+        target = GameObject.Find("Player").transform;
+    }
+    void Update() {
+        LookAround();
+        camDistanceCtrl();
+    }
+    void camDistanceCtrl() {
+        float wheelInput = Input.GetAxis("Mouse ScrollWheel");
+        if (wheelInput > 0) {
+            // ÈÙ ¾÷
+            if (distance > 3) {
+                distance -= Time.deltaTime * 100;
+            }
+            if (distance < 3) {
+                distance = 3;
+            }
+        }
+        else if (wheelInput < 0) {
+            // ÈÙ ´Ù¿î
+            if (distance < 15) {
+                distance += Time.deltaTime * 100;
+            }
+            if (distance > 15) {
+                distance = 15;
+            }
+        }
+        Vector3 reserveDistance = new Vector3(0, 0, distance);
+
+        transform.position = target.transform.position - transform.rotation * reserveDistance + (Vector3.up * 1);
+    }
+    void LookAround() {
+        Vector2 mouseDelta = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+        Vector3 camAngle = transform.rotation.eulerAngles;
+        float x = camAngle.x - (mouseDelta.y * xSensitivity);
+
+        if (x < 180f) {
+            x = Mathf.Clamp(x, -1f, 70f);
+        }
+        else {
+            x = Mathf.Clamp(x, 360f, 361f);
+        }
+
+        transform.rotation = Quaternion.Euler(x, camAngle.y + (mouseDelta.x * ySensitivity), camAngle.z) ;
+    }
+}
