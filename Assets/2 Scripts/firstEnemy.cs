@@ -11,20 +11,34 @@ public class firstEnemy : MonoBehaviour
     GameObject pillarPrefab;
 
     List<Vector3> atkPos = new List<Vector3>();
+
+    Rigidbody rigid;
     void Awake() {
+        rigid = GetComponent<Rigidbody>();
+
         target = GameObject.Find("Player").transform;
     }
     void Start() {
+        // 패턴1 사용 틀
+        //RaycastHit hit;
+        //Physics.Raycast(target.position + Vector3.up * 30, Vector3.down, out hit, 200, 1 << 6);
+        //for (int i = 0; i < 10; i++) {
+        //    Vector3 randPos = hit.point + (Vector3.right * Random.Range(-10f, 10f)) + (Vector3.forward * Random.Range(-10f,10f));
+        //    GameObject dangerZone = Instantiate(dangerZonePrefab, randPos + Vector3.up * 0.01f, Quaternion.identity);
+        //    //atkPos.Add(randPos);
+        //    StartCoroutine(Pattern1(randPos, dangerZone));
+        //}
+
+        // 패턴 2
         RaycastHit hit;
         Physics.Raycast(target.position + Vector3.up * 30, Vector3.down, out hit, 200, 1 << 6);
-        for (int i = 0; i < 10; i++) {
-            Vector3 randPos = hit.point + (Vector3.right * Random.Range(-10f, 10f)) + (Vector3.forward * Random.Range(-10f,10f));
-            GameObject dangerZone = Instantiate(dangerZonePrefab, randPos + Vector3.up * 0.01f, Quaternion.identity);
-            //atkPos.Add(randPos);
-            StartCoroutine(Pattern1(randPos, dangerZone));
-        }
+        GameObject dangerZone = Instantiate(dangerZonePrefab, hit.point + Vector3.up * 0.01f, Quaternion.identity);
+        dangerZone.transform.localScale = Vector3.one * 1.4f;
+
+        StartCoroutine(Pattern2(dangerZone));
     }
     void Update() {
+
         Debug.DrawRay(target.position + Vector3.up * 100, Vector3.down * 500, Color.red);
     }
     IEnumerator Pattern1(Vector3 pos, GameObject zone) {
@@ -60,7 +74,24 @@ public class firstEnemy : MonoBehaviour
         Destroy(pillar);
         Destroy(zone);
     }
-    IEnumerator Pattern2() {
-        yield return null;
+    IEnumerator Pattern2(GameObject zone) {
+        for (int i = 0; i < 3; i++) {
+            float progress = 0;
+            while (progress < 1) {
+                progress += 0.01f;
+                zone.transform.position = new Vector3(target.position.x, zone.transform.position.y, target.position.z);
+                yield return null;
+            }
+            yield return new WaitForSeconds(0.1f);
+            transform.position = new Vector3(zone.transform.position.x, transform.position.y, zone.transform.position.z);
+            rigid.AddForce(Vector3.down * 100, ForceMode.Impulse);
+            while(Physics.SphereCast(transform.position, 0.3f, Vector3.down, out RaycastHit hit, 0.1f)) {
+
+            }
+
+            yield return new WaitForSeconds(1f);
+            rigid.AddForce(Vector3.up * 50, ForceMode.Impulse);
+        }
+        // dangerZone scale => 1.4f
     }
 }
