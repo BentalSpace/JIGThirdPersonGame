@@ -7,6 +7,12 @@ public class PlayerCtrl : MonoBehaviour
     Transform cam;
     [SerializeField]
     Transform groundCheck;
+    [SerializeField]
+    GameObject normalAtkCol;
+    [SerializeField]
+    GameObject stabAtkCol;
+    [SerializeField]
+    GameObject rotAtkCol;
 
     float h, v;
 
@@ -20,8 +26,12 @@ public class PlayerCtrl : MonoBehaviour
     float applySpeed;
 
     bool isRun;
+    bool isAtk;
+    bool isRotAtk;
     bool isDJump;
     bool isGround;
+
+    public static bool dontCtrl;
 
     [SerializeField, Tooltip("추가적인 중력")]
     float plusGravity;
@@ -30,6 +40,9 @@ public class PlayerCtrl : MonoBehaviour
     Animator anim;
 
     void Awake() {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         rigid = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
 
@@ -39,13 +52,37 @@ public class PlayerCtrl : MonoBehaviour
     void Update() {
         h = Input.GetAxis("Horizontal");
         v = Input.GetAxis("Vertical");
-        Run();
-        Jump();
-        DoubleJump();
-        Debug.Log(rigid.velocity);
+
+        if(isAtk || dontCtrl) {
+            isRun = false;
+            anim.SetBool("isRun", false);
+            applySpeed = walkSpeed;
+        }
+
+        if (!dontCtrl) {
+            if (!isRotAtk) {
+                Run();
+            }
+            if (!isAtk && !isRotAtk) {
+                Jump();
+            }
+            DoubleJump();
+            if (Input.GetMouseButtonDown(0) && isGround && !isAtk && !isRotAtk) {
+                StartCoroutine(Attack());
+            }
+        }
     }
     void FixedUpdate() {
-        Move();
+        if (!dontCtrl && !isAtk) {
+            Move();
+        }
+        GroundCheck();
+
+        // 중력 추가
+        if (!isGround)
+            rigid.AddForce(Vector3.down * plusGravity);
+    }
+    void GroundCheck() {
         int layerMask = 1 << 3;
         layerMask = ~layerMask;
         RaycastHit hit;
@@ -54,8 +91,6 @@ public class PlayerCtrl : MonoBehaviour
         if (isDJump) {
             isDJump = !isGround;
         }
-        if(!isGround)
-            rigid.AddForce(Vector3.down * plusGravity);
     }
     void Move() {
         Vector2 moveInput = new Vector2(h, v);
@@ -74,7 +109,7 @@ public class PlayerCtrl : MonoBehaviour
         }
     }
     void Run() {
-        if (Input.GetButtonDown("Run")) {
+        if (Input.GetButton("Run") && !isRun) {
             isRun = true;
             anim.SetBool("isRun", true);
             applySpeed = runSpeed;
@@ -99,20 +134,128 @@ public class PlayerCtrl : MonoBehaviour
             anim.SetTrigger("DJump");
         }
     }
+
+    // 첫번째 베기 공격
+    IEnumerator Attack() {
+        anim.SetTrigger("FirstAtk");
+        normalAtkCol.SetActive(true);
+        normalAtkCol.GetComponent<Attack>().dmg = 1.5f;
+        isAtk = true;
+        float time = 0;
+        float maxTime = 0.4f;
+        yield return new WaitForSeconds(0.15f);
+        normalAtkCol.SetActive(false);
+        while(maxTime > time) {
+            time += Time.deltaTime;
+            if (Input.GetMouseButtonDown(0)) {
+                StartCoroutine(SecondAttack());
+                yield break;
+            }
+            if (Input.GetMouseButtonDown(1)) {
+                StartCoroutine(StabAttack());
+                yield break;
+            }
+            yield return null;
+        }
+        isAtk = false;
+        anim.SetTrigger("AtkEnd");
+    }
+
+    // 두번째 베기 공격
+    IEnumerator SecondAttack() {
+        anim.SetTrigger("SecondAtk");
+        normalAtkCol.SetActive(true);
+        normalAtkCol.GetComponent<Attack>().dmg = 2f;
+        isAtk = true;
+        float time = 0;
+        float maxTime = 0.4f;
+        yield return new WaitForSeconds(0.15f);
+        normalAtkCol.SetActive(false);
+        while(maxTime > time) {
+            time += Time.deltaTime;
+            if (Input.GetMouseButtonDown(0)) {
+                StartCoroutine(Attack());
+                yield break;
+            }
+            if (Input.GetKey(KeyCode.A) && Input.GetKey(KeyCode.D) && Input.GetMouseButton(1)) {
+                StartCoroutine(RotAttack());
+                yield break;
+            }
+            yield return null;
+        }
+        isAtk = false;
+        anim.SetTrigger("AtkEnd");
+    }
+
+    // 찌르기 공격
+    IEnumerator StabAttack() {
+        anim.SetTrigger("StabAtk");
+        stabAtkCol.SetActive(true);
+        stabAtkCol.GetComponent<Attack>().dmg = 4f;
+        isAtk = true;
+        yield return new WaitForSeconds(0.2f);
+        stabAtkCol.SetActive(false);
+        yield return new WaitForSeconds(0.5f);
+        isAtk = false;
+        anim.SetTrigger("AtkEnd");
+    }
+
+    // 회전 공격
+    IEnumerator RotAttack() {
+        anim.SetTrigger("RotAtk");
+        isAtk = false;
+        isRotAtk = true;
+        rotAtkCol.SetActive(true);
+        rotAtkCol.GetComponent<Attack>().dmg = 1.2f;
+        applySpeed = 3;
+        float time = 0;
+        int cnt = 0;
+        int maxCnt = 15;
+
+        while (maxCnt > cnt) {
+            time += Time.deltaTime;
+            if (!Input.GetMouseButton(1)) {
+                // 공격 종료
+                yield return new WaitForSeconds(0.15f);
+                isRotAtk = false;
+                if (isRun)
+                    applySpeed = runSpeed;
+                else
+                    applySpeed = walkSpeed;
+                rotAtkCol.SetActive(false);
+                anim.SetTrigger("AtkEnd");
+                yield break;
+            }
+            if(time > 0.2f) {
+                rotAtkCol.SetActive(false);
+                rotAtkCol.SetActive(true);
+                time = 0;
+                cnt++;
+            }
+            yield return null;
+        }
+        yield return new WaitForSeconds(0.2f);
+        isRotAtk = false;
+        if (isRun)
+            applySpeed = runSpeed;
+        else
+            applySpeed = walkSpeed;
+        rotAtkCol.SetActive(false);
+        anim.SetTrigger("AtkEnd");
+    }
     void OnDrawGizmos() {
-        Gizmos.color = Color.gray;
-        int layerMask = 1 << 3;
-        layerMask = ~layerMask;
-        RaycastHit hit;
-        bool test = Physics.SphereCast(groundCheck.position, 0.2f, Vector3.down, out hit, 0.1f, layerMask);
-        if (!isGround) {
-            Gizmos.color = Color.red;
-            Gizmos.DrawRay(groundCheck.position, Vector3.down * 0.1f);
-        }
-        if (isGround) {
-            Gizmos.color = Color.blue;
-            Gizmos.DrawRay(groundCheck.position, Vector3.down * hit.distance);
-            Gizmos.DrawWireSphere(groundCheck.position + Vector3.down * hit.distance, 0.2f);
-        }
+        //int layerMask = 1 << 3;
+        //layerMask = ~layerMask;
+        //RaycastHit hit;
+        //bool test = Physics.SphereCast(groundCheck.position, 0.2f, Vector3.down, out hit, 0.1f, layerMask);
+        //if (!isGround) {
+        //    Gizmos.color = Color.red;
+        //    Gizmos.DrawRay(groundCheck.position, Vector3.down * 0.1f);
+        //}
+        //if (isGround) {
+        //    Gizmos.color = Color.blue;
+        //    Gizmos.DrawRay(groundCheck.position, Vector3.down * hit.distance);
+        //    Gizmos.DrawWireSphere(groundCheck.position + Vector3.down * hit.distance, 0.2f);
+        //}
     }
 }
