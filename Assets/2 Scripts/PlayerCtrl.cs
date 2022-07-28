@@ -32,6 +32,7 @@ public class PlayerCtrl : MonoBehaviour
     bool isGround;
 
     public static bool dontCtrl;
+    public static bool isOneTime;
 
     [SerializeField, Tooltip("추가적인 중력")]
     float plusGravity;
@@ -49,6 +50,8 @@ public class PlayerCtrl : MonoBehaviour
         cam = Camera.main.transform;
         applySpeed = walkSpeed;
     }
+    void Start() {
+    }
     void Update() {
         h = Input.GetAxis("Horizontal");
         v = Input.GetAxis("Vertical");
@@ -58,7 +61,21 @@ public class PlayerCtrl : MonoBehaviour
             anim.SetBool("isRun", false);
             applySpeed = walkSpeed;
         }
+        if (dontCtrl && isOneTime) {
+            // 공격 모두 제거
+            Debug.Log("OUT");
+            isOneTime = false;
+            StopAllCoroutines();
+            anim.SetTrigger("AtkEnd");
+            isAtk = false;
+            isRotAtk = false;
+            isRun = false;
+            anim.SetBool("isMove", false);
+            anim.SetBool("isRun", false);
+            applySpeed = walkSpeed;
 
+            Invoke("ResetTrigger", 0.1f);
+        }
         if (!dontCtrl) {
             if (!isRotAtk) {
                 Run();
@@ -71,6 +88,14 @@ public class PlayerCtrl : MonoBehaviour
                 StartCoroutine(Attack());
             }
         }
+    }
+
+    void ResetTrigger() {
+        anim.ResetTrigger("AtkEnd");
+        anim.ResetTrigger("FirstAtk");
+        anim.ResetTrigger("SecondAtk");
+        anim.ResetTrigger("StabAtk");
+        anim.ResetTrigger("RotAtk");
     }
     void FixedUpdate() {
         if (!dontCtrl && !isAtk) {
@@ -129,6 +154,7 @@ public class PlayerCtrl : MonoBehaviour
     void DoubleJump() {
         if (Input.GetButtonDown("Jump") && !isDJump && !isGround) {
             isDJump = true;
+            Debug.Log("DJUIMP");
             rigid.velocity = Vector3.zero;
             rigid.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
             anim.SetTrigger("DJump");
@@ -159,6 +185,7 @@ public class PlayerCtrl : MonoBehaviour
         }
         isAtk = false;
         anim.SetTrigger("AtkEnd");
+        Debug.Log("First");
     }
 
     // 두번째 베기 공격
@@ -185,6 +212,7 @@ public class PlayerCtrl : MonoBehaviour
         }
         isAtk = false;
         anim.SetTrigger("AtkEnd");
+        Debug.Log("Second");
     }
 
     // 찌르기 공격
@@ -198,15 +226,17 @@ public class PlayerCtrl : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         isAtk = false;
         anim.SetTrigger("AtkEnd");
+        Debug.Log("Stab");
     }
 
     // 회전 공격
     IEnumerator RotAttack() {
+        Debug.Log("RotStart");
         anim.SetTrigger("RotAtk");
         isAtk = false;
         isRotAtk = true;
         rotAtkCol.SetActive(true);
-        rotAtkCol.GetComponent<Attack>().dmg = 1.2f;
+        rotAtkCol.GetComponent<Attack>().dmg = 2f;
         applySpeed = 3;
         float time = 0;
         int cnt = 0;
@@ -224,6 +254,7 @@ public class PlayerCtrl : MonoBehaviour
                     applySpeed = walkSpeed;
                 rotAtkCol.SetActive(false);
                 anim.SetTrigger("AtkEnd");
+                Debug.Log("Rot1");
                 yield break;
             }
             if(time > 0.2f) {
@@ -242,6 +273,7 @@ public class PlayerCtrl : MonoBehaviour
             applySpeed = walkSpeed;
         rotAtkCol.SetActive(false);
         anim.SetTrigger("AtkEnd");
+        Debug.Log("Rot2");
     }
     void OnDrawGizmos() {
         //int layerMask = 1 << 3;
@@ -257,5 +289,7 @@ public class PlayerCtrl : MonoBehaviour
         //    Gizmos.DrawRay(groundCheck.position, Vector3.down * hit.distance);
         //    Gizmos.DrawWireSphere(groundCheck.position + Vector3.down * hit.distance, 0.2f);
         //}
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawWireSphere(transform.position, 15);
     }
 }

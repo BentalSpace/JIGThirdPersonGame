@@ -13,11 +13,10 @@ public class Attack : MonoBehaviour
     void Awake() {
     }
     void OnTriggerEnter(Collider other) {
-        if (other.CompareTag("Enemy") && other.gameObject != hitTarget) {
+        if (other.CompareTag("Enemy") && other.gameObject != hitTarget && other.GetComponentInParent<firstEnemy>().isGetHitTime) {
             Instantiate(hitEffect, transform.position, transform.rotation, null);
             //GetComponentInParent<Animator>().speed = 0;
             //Invoke("SpeedBack", 0.1f);
-            other.GetComponentInParent<Animator>().SetTrigger("Hit");
             other.GetComponentInParent<firstEnemy>().HpDown(dmg);
             hitTarget = other.gameObject;
         }
