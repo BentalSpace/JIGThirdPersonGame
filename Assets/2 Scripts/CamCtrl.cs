@@ -8,6 +8,8 @@ public class CamCtrl : MonoBehaviour
     float xMove;
     float yMove;
 
+    public static bool dontCtrl;
+
     [SerializeField, Tooltip("카메라와 타겟의 거리")]
     float distance;
 
@@ -18,10 +20,13 @@ public class CamCtrl : MonoBehaviour
 
     void Awake() {
         target = GameObject.Find("Player").transform;
+        dontCtrl = false;
     }
     void Update() {
-        LookAround();
-        camDistanceCtrl();
+        if (!dontCtrl) {
+            LookAround();
+            camDistanceCtrl();
+        }
     }
     void camDistanceCtrl() {
         float wheelInput = Input.GetAxis("Mouse ScrollWheel");

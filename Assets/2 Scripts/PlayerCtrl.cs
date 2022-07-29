@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerCtrl : MonoBehaviour
 {
@@ -14,6 +15,7 @@ public class PlayerCtrl : MonoBehaviour
     [SerializeField]
     GameObject rotAtkCol;
 
+    GameObject gameOverPanel;
     float h, v;
 
     [SerializeField]
@@ -22,6 +24,8 @@ public class PlayerCtrl : MonoBehaviour
     float runSpeed;
     [SerializeField]
     float jumpPower;
+    float maxHp;
+    float curHp;
 
     float applySpeed;
 
@@ -33,6 +37,8 @@ public class PlayerCtrl : MonoBehaviour
 
     public static bool dontCtrl;
     public static bool isOneTime;
+
+    Image hpBar;
 
     [SerializeField, Tooltip("추가적인 중력")]
     float plusGravity;
@@ -49,8 +55,15 @@ public class PlayerCtrl : MonoBehaviour
 
         cam = Camera.main.transform;
         applySpeed = walkSpeed;
+        maxHp = 100;
+        curHp = maxHp;
+        dontCtrl = false;
+
+        hpBar = GameObject.Find("HPBarFill").GetComponent<Image>();
+        gameOverPanel = GameObject.Find("GameOverPanel");
     }
     void Start() {
+        gameOverPanel.SetActive(false);
     }
     void Update() {
         h = Input.GetAxis("Horizontal");
@@ -63,7 +76,6 @@ public class PlayerCtrl : MonoBehaviour
         }
         if (dontCtrl && isOneTime) {
             // 공격 모두 제거
-            Debug.Log("OUT");
             isOneTime = false;
             StopAllCoroutines();
             anim.SetTrigger("AtkEnd");
@@ -89,7 +101,9 @@ public class PlayerCtrl : MonoBehaviour
             }
         }
     }
-
+    void LateUpdate() {
+        hpBar.fillAmount = curHp / maxHp;
+    }
     void ResetTrigger() {
         anim.ResetTrigger("AtkEnd");
         anim.ResetTrigger("FirstAtk");
@@ -164,12 +178,13 @@ public class PlayerCtrl : MonoBehaviour
     // 첫번째 베기 공격
     IEnumerator Attack() {
         anim.SetTrigger("FirstAtk");
+        yield return new WaitForSeconds(0.13f);
         normalAtkCol.SetActive(true);
-        normalAtkCol.GetComponent<Attack>().dmg = 1.5f;
+        normalAtkCol.GetComponent<Attack>().dmg = 151f;
         isAtk = true;
         float time = 0;
-        float maxTime = 0.4f;
-        yield return new WaitForSeconds(0.15f);
+        float maxTime = 0.3f;
+        yield return new WaitForSeconds(0.13f);
         normalAtkCol.SetActive(false);
         while(maxTime > time) {
             time += Time.deltaTime;
@@ -191,12 +206,13 @@ public class PlayerCtrl : MonoBehaviour
     // 두번째 베기 공격
     IEnumerator SecondAttack() {
         anim.SetTrigger("SecondAtk");
+        yield return new WaitForSeconds(0.13f);
         normalAtkCol.SetActive(true);
         normalAtkCol.GetComponent<Attack>().dmg = 2f;
         isAtk = true;
         float time = 0;
-        float maxTime = 0.4f;
-        yield return new WaitForSeconds(0.15f);
+        float maxTime = 0.25f;
+        yield return new WaitForSeconds(0.2f);
         normalAtkCol.SetActive(false);
         while(maxTime > time) {
             time += Time.deltaTime;
@@ -218,12 +234,13 @@ public class PlayerCtrl : MonoBehaviour
     // 찌르기 공격
     IEnumerator StabAttack() {
         anim.SetTrigger("StabAtk");
+        yield return new WaitForSeconds(0.13f);
         stabAtkCol.SetActive(true);
         stabAtkCol.GetComponent<Attack>().dmg = 4f;
         isAtk = true;
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.23f);
         stabAtkCol.SetActive(false);
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSeconds(0.2f);
         isAtk = false;
         anim.SetTrigger("AtkEnd");
         Debug.Log("Stab");
@@ -275,6 +292,23 @@ public class PlayerCtrl : MonoBehaviour
         anim.SetTrigger("AtkEnd");
         Debug.Log("Rot2");
     }
+    public void HpDown(float dmg) {
+        curHp -= dmg;
+        if(curHp <= 0) {
+            anim.SetTrigger("Die");
+            dontCtrl = true;
+            CamCtrl.dontCtrl = true;
+            Invoke("GameOver", 1f);
+        }
+        Debug.Log("플레이어HP - " + curHp);
+    }
+    void GameOver() {
+        gameOverPanel.SetActive(true);
+        CamCtrl.dontCtrl = true;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        Time.timeScale = 0;
+    }
     void OnDrawGizmos() {
         //int layerMask = 1 << 3;
         //layerMask = ~layerMask;
@@ -289,7 +323,7 @@ public class PlayerCtrl : MonoBehaviour
         //    Gizmos.DrawRay(groundCheck.position, Vector3.down * hit.distance);
         //    Gizmos.DrawWireSphere(groundCheck.position + Vector3.down * hit.distance, 0.2f);
         //}
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(transform.position, 15);
+        //Gizmos.color = Color.cyan;
+        //Gizmos.DrawWireSphere(transform.position, 15);
     }
 }

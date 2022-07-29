@@ -35,7 +35,7 @@ public class ObjectManager : MonoBehaviour
             Initialize(pillar, 30, "pillar");
         }
         if (pillarPlusPrefab) {
-            Initialize(pillarPlus, 30, "pillarPlus");
+            Initialize(pillarPlus, 200, "pillarPlus");
         }
         if (pattern3Prefab) {
             Initialize(pattern3, 5, "pattern3");

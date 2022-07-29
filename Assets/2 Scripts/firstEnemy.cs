@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class firstEnemy : MonoBehaviour {
     /*
@@ -12,6 +13,7 @@ public class firstEnemy : MonoBehaviour {
     - 빔공격은 주기적으로(쿨타임 감소), 강화 패턴3공격 후 [???]
     */
     Transform target;
+    GameObject gameClearPanel;
     [SerializeField]
     GameObject dangerZonePrefab;
     [SerializeField]
@@ -20,6 +22,8 @@ public class firstEnemy : MonoBehaviour {
     GameObject pattern2Particle;
     [SerializeField]
     GameObject pattern3Prefab;
+    [SerializeField]
+    EnemyAttack atkScript;
 
     int phase;
     int phase1Cnt;
@@ -35,6 +39,7 @@ public class firstEnemy : MonoBehaviour {
 
     bool pattern3End;
     bool pattern3PlusFollow;
+    bool isGameClear;
 
     float hp;
     float maxHp;
@@ -44,20 +49,33 @@ public class firstEnemy : MonoBehaviour {
     float pattern1CurTime;
     float pattern1MaxTime;
 
+    [SerializeField]
+    AudioClip pattern1Clip;
+    [SerializeField]
+    AudioClip pattern2Clip;
+    [SerializeField]
+    AudioClip pattern3LenghtClip;
+    [SerializeField]
+    AudioClip pattern3RotClip;
+
     public List<GameObject> pattern3PlusObjects = new List<GameObject>();
 
     Rigidbody rigid;
     Animator anim;
+    AudioSource audio;
     void Awake() {
         rigid = GetComponent<Rigidbody>();
         anim = GetComponent<Animator>();
+        audio = GetComponent<AudioSource>();
 
         target = GameObject.Find("Player").transform;
+        downTime = 0;
         maxHp = 150;
         hp = maxHp;
         targetHp = 0;
         pattern1MaxTime = 3.3f;
         phase = 1;
+        isGetHitTime = true;
         phase1AtkCnt = Random.Range(2, 4);
         phase1Cnt = 0;
         phase1Pattern = 0;
@@ -65,10 +83,11 @@ public class firstEnemy : MonoBehaviour {
         phase2Pattern = 0;
         phase3Cnt = 0;
         phase3Pattern = 0;
+
+        gameClearPanel = GameObject.Find("GameClearPanel");
     }
     void Start() {
-        Physics.Raycast(target.position + Vector3.up * 30, Vector3.down, out RaycastHit hit, 200, 1 << 6);
-        Pattern1PlusFrame(40, 20, hit);
+        gameClearPanel.SetActive(false);
         // 패턴1 사용 틀
         //RaycastHit hit;
         //Physics.Raycast(target.position + Vector3.up * 30, Vector3.down, out hit, 200, 1 << 6);
@@ -98,6 +117,8 @@ public class firstEnemy : MonoBehaviour {
         //StartCoroutine(Pattern3(dangerZone));
     }
     void Update() {
+        if (isGameClear)
+            return;
         pattern1CurTime += Time.deltaTime;
         // 땅 확인
         int layerMask = 1 << 6;
@@ -142,7 +163,7 @@ public class firstEnemy : MonoBehaviour {
                 pattern1CurTime = 0;
                 phase3Cnt++;
                 if (Physics.Raycast(target.position + Vector3.up * 30, Vector3.down, out hit, 200, 1 << 6)) {
-                    Pattern1Frame(30, 20, hit);
+                    Pattern1PlusFrame(100, 30, hit);
                 }
                 if (phase3Cnt > 2 && phase3Pattern == 0) {
                     Invoke("Pattern3PlusFrame", 1.5f);
@@ -165,15 +186,23 @@ public class firstEnemy : MonoBehaviour {
                 if (hp <= 0) {
                     phase++;
                     anim.SetTrigger("Die");
+                    gameClearPanel.SetActive(true);
+                    int m = (int)GameManager.gameTime / 60;
+                    int s = (int)GameManager.gameTime % 60;
+                    gameClearPanel.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"클리어에 걸린 시간 : {m}m {s}s";
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                    isGameClear = true;
+                    Invoke("GameClear", 2.0f);
                 }
                 else {
-                    Invoke("GoUp", 1.5f);
+                    Invoke("GoUp", 1.0f);
                 }
             }
             else if(downTime > 10) {
                 isGetHitTime = false;
                 anim.SetBool("isDizzy", false);
-                Invoke("GoUpFail", 1.5f);
+                Invoke("GoUpFail", 1.0f);
             }
         }
 
@@ -194,7 +223,17 @@ public class firstEnemy : MonoBehaviour {
             }
         }
     }
-
+    void GameClear() {
+        Time.timeScale = 0;
+        CamCtrl.dontCtrl = true;
+    }
+    void FixedUpdate() {
+        //플레이어를 계속 쳐다보는 코드
+        if (!isGetHitTime || phase <= 3) {
+            Vector3 targetPosition = new Vector3(target.position.x, transform.position.y, target.position.z);
+            transform.LookAt(targetPosition);
+        }
+    }
     void GoUp() {
         downTime = 0;
         phase++;
@@ -241,7 +280,12 @@ public class firstEnemy : MonoBehaviour {
             GameObject dangerZone = ObjectManager.instance.GetObject("dangerZone");
             dangerZone.transform.position = randPos + Vector3.up * 0.01f;
             dangerZone.transform.localScale = Vector3.one * 0.5f;
-            StartCoroutine(Pattern1(randPos, dangerZone));
+            if (i < 10) {
+                StartCoroutine(Pattern1(randPos, dangerZone, true));
+            }
+            else {
+                StartCoroutine(Pattern1(randPos, dangerZone));
+            }
         }
     }
     void Pattern1PlusFrame(int cnt, float range, RaycastHit raycastHit) {
@@ -257,7 +301,12 @@ public class firstEnemy : MonoBehaviour {
             GameObject dangerZone = ObjectManager.instance.GetObject("dangerZone");
             dangerZone.transform.position = randPos + Vector3.up * 0.01f;
             dangerZone.transform.localScale = Vector3.one * 0.1f;
-            StartCoroutine(Pattern1Plus(randPos, dangerZone));
+            if (i < 10) {
+                StartCoroutine(Pattern1Plus(randPos, dangerZone, true));
+            }
+            else {
+                StartCoroutine(Pattern1Plus(randPos, dangerZone));
+            }
         }
     }
     void Pattern2Frame() {
@@ -283,8 +332,8 @@ public class firstEnemy : MonoBehaviour {
         Physics.Raycast(target.position + Vector3.up * 30, Vector3.down, out hit, 200, 1 << 6);
         GameObject dangerZone1 = ObjectManager.instance.GetObject("dangerZone");
         GameObject dangerZone2 = ObjectManager.instance.GetObject("dangerZone");
-        dangerZone1.transform.position = hit.point + Vector3.up * 0.01f + Vector3.forward * 30;
-        dangerZone2.transform.position = hit.point + Vector3.up * 0.01f + Vector3.forward * -30;
+        dangerZone1.transform.position = new Vector3(hit.point.x, hit.point.y + 0.01f, 30);
+        dangerZone2.transform.position = new Vector3(hit.point.x, hit.point.y + 0.01f, -30);
         dangerZone1.transform.localScale = Vector3.one * 0.7f;
         dangerZone2.transform.localScale = Vector3.one * 0.7f;
         StartCoroutine(Pattern3Plus(dangerZone1));
@@ -292,7 +341,7 @@ public class firstEnemy : MonoBehaviour {
         pattern3PlusObjects = new List<GameObject>();
     }
 
-    IEnumerator Pattern1(Vector3 pos, GameObject zone) {
+    IEnumerator Pattern1(Vector3 pos, GameObject zone, bool audioPlay = false) {
         // 하늘에서 쏘는 레이저
         float randTime = Random.Range(0.7f, 1.3f);
         yield return new WaitForSeconds(randTime);
@@ -301,6 +350,13 @@ public class firstEnemy : MonoBehaviour {
         pillar.transform.localScale = new Vector3(0.5f, 10, 0.5f);
         float progress = 0;
         float maxProgress = 1;
+        AudioSource pilAudio = null;
+        if (audioPlay) {
+            pilAudio = pillar.GetComponent<AudioSource>();
+            pilAudio.clip = pattern1Clip;
+            pilAudio.loop = true;
+            pilAudio.Play();
+        }
         while (progress < maxProgress) {
             progress += 0.1f;
             pillar.transform.localScale = Vector3.Lerp(new Vector3(0.5f, 10, 0.5f), new Vector3(0.1f, 10, 0.1f), progress / maxProgress);
@@ -308,6 +364,7 @@ public class firstEnemy : MonoBehaviour {
         }
 
         yield return new WaitForSeconds(0.3f);
+        pillar.GetComponent<EnemyAttack>().isAtkTime = true;
         progress = 0;
         while (progress < maxProgress) {
             progress += 0.05f;
@@ -320,21 +377,33 @@ public class firstEnemy : MonoBehaviour {
         while (progress < maxProgress) {
             progress += 0.1f;
             pillar.transform.localScale = Vector3.Lerp(new Vector3(3, 10, 3), new Vector3(0, 10, 0), progress / maxProgress);
-            pillar.GetComponentInChildren<Light>().intensity -= 1;
+            pillar.GetComponentInChildren<Light>().intensity -= 2;
             yield return new WaitForSeconds(0.07f);
         }
+        if (audioPlay) {
+            pilAudio.loop = false;
+            pilAudio.Stop();
+        }
+        pillar.GetComponent<EnemyAttack>().isAtkTime = false;
         ObjectManager.instance.ReturnObject(pillar, "pillar");
         ObjectManager.instance.ReturnObject(zone, "dangerZone");
     }
-    IEnumerator Pattern1Plus(Vector3 pos, GameObject zone) {
+    IEnumerator Pattern1Plus(Vector3 pos, GameObject zone, bool audioPlay = false) {
         // 하늘에서 쏘는 얇은 레이저
         float randTime = Random.Range(0.7f, 1.3f);
         yield return new WaitForSeconds(randTime);
-        GameObject pillar = ObjectManager.instance.GetObject("pillar");
+        GameObject pillar = ObjectManager.instance.GetObject("pillarPlus");
         pillar.transform.position = pos + Vector3.up * 10f;
         pillar.transform.localScale = new Vector3(0.3f, 10, 0.3f);
         float progress = 0;
         float maxProgress = 1;
+        AudioSource pilAudio = null;
+        if (audioPlay) {
+            pilAudio = pillar.GetComponent<AudioSource>();
+            pilAudio.clip = pattern1Clip;
+            pilAudio.loop = true;
+            pilAudio.Play();
+        }
         while (progress < maxProgress) {
             progress += 0.1f;
             pillar.transform.localScale = Vector3.Lerp(new Vector3(0.3f, 10, 0.3f), new Vector3(0.05f, 10, 0.05f), progress / maxProgress);
@@ -342,6 +411,7 @@ public class firstEnemy : MonoBehaviour {
         }
 
         yield return new WaitForSeconds(0.3f);
+        pillar.GetComponent<EnemyAttack>().isAtkTime = true;
         progress = 0;
         while (progress < maxProgress) {
             progress += 0.05f;
@@ -354,9 +424,14 @@ public class firstEnemy : MonoBehaviour {
         while (progress < maxProgress) {
             progress += 0.1f;
             pillar.transform.localScale = Vector3.Lerp(new Vector3(0.5f, 10, 0.5f), new Vector3(0, 10, 0), progress / maxProgress);
-            pillar.GetComponentInChildren<Light>().intensity -= 1;
+            pillar.GetComponentInChildren<Light>().intensity -= 2;
             yield return new WaitForSeconds(0.07f);
         }
+        if (audioPlay) {
+            pilAudio.loop = false;
+            pilAudio.Stop();
+        }
+        pillar.GetComponent<EnemyAttack>().isAtkTime = true;
         ObjectManager.instance.ReturnObject(pillar, "pillar");
         ObjectManager.instance.ReturnObject(zone, "dangerZone");
     }
@@ -374,24 +449,28 @@ public class firstEnemy : MonoBehaviour {
                 yield return null;
             }
             zone.SetActive(false);
-            transform.position = new Vector3(zone.transform.position.x, target.position.y + 20f, zone.transform.position.z);
+            transform.position = new Vector3(zone.transform.position.x, target.position.y + 30f, zone.transform.position.z);
             rigid.velocity = Vector3.zero;
             yield return new WaitForSeconds(0.1f);
             // 아래로 찍기
             rigid.AddForce(Vector3.down * 100, ForceMode.VelocityChange);
 
+            audio.clip = pattern2Clip;
+            audio.loop = false;
+
+            atkScript.isAtkTime = true;
             while (true) {
                 RaycastHit hit;
                 isGround = Physics.SphereCast(transform.position + (Vector3.up * 0.6f), 0.4f, Vector3.down, out hit, 0.2f, layerMask);
                 Quaternion rot = new Quaternion();
                 rot.eulerAngles = new Vector3(-90, 0, 0);
                 if (isGround) {
+                    audio.Play();
                     Instantiate(pattern2Particle, hit.point, rot);
                     break;
                 }
                 yield return null;
             }
-
             // 낙하한 몬스터와 플레이어의 거리가 짧다면, 플레이어는 약간의 스턴과 점프
             if (Vector3.Distance(target.position, transform.position) < 10) {
                 PlayerCtrl.dontCtrl = true;
@@ -405,7 +484,9 @@ public class firstEnemy : MonoBehaviour {
             else {
                 yield return new WaitForSeconds(1f);
             }
+            atkScript.isAtkTime = false;
             rigid.AddForce(Vector3.up * 50, ForceMode.VelocityChange);
+            
         }
         // dangerZone scale => 1.4f
 
@@ -428,6 +509,7 @@ public class firstEnemy : MonoBehaviour {
             Quaternion rot = new Quaternion();
             rot.eulerAngles = new Vector3(-90, 0, 0);
             if (isGround) {
+                audio.Play();
                 Instantiate(pattern2Particle, hit.point, rot);
                 break;
             }
@@ -442,11 +524,11 @@ public class firstEnemy : MonoBehaviour {
             target.GetComponent<Rigidbody>().AddForce(Vector3.up * 10, ForceMode.Impulse);
             yield return new WaitForSeconds(0.5f);
             PlayerCtrl.dontCtrl = false;
-            yield return new WaitForSeconds(0.5f);
         }
-        //공격 시간
         zone.SetActive(true);
         ObjectManager.instance.ReturnObject(zone, "dangerZone");
+        // 공격시간
+        atkScript.isAtkTime = false;
         anim.SetBool("isDizzy", true);
         isGetHitTime = true;
     }
@@ -456,6 +538,7 @@ public class firstEnemy : MonoBehaviour {
         GameObject item = ObjectManager.instance.GetObject("pattern3");
         item.transform.position = zone.transform.position + Vector3.up * 20;
         ObjectManager.instance.ReturnObject(zone, "dangerZone");
+        AudioSource itemAudio = item.GetComponent<AudioSource>();
         float progress = 0;
         Vector3 itemVec = item.transform.position;
         while (progress < 1) {
@@ -466,6 +549,8 @@ public class firstEnemy : MonoBehaviour {
 
         yield return new WaitForSeconds(0.5f);
         // 날을 늘린다.
+        itemAudio.clip = pattern3LenghtClip;
+        itemAudio.Play();
         progress = 0;
         Transform knife = item.transform.GetChild(1);
         while (progress < 1) {
@@ -473,10 +558,14 @@ public class firstEnemy : MonoBehaviour {
             knife.localScale = Vector3.Lerp(new Vector3(5, 0.2f, 3), new Vector3(100, 0.2f, 3), progress);
             yield return null;
         }
-
+        itemAudio.Stop();
+        knife.GetComponent<EnemyAttack>().isAtkTime = true;
         yield return new WaitForSeconds(0.5f);
         // 날을 돌림
         float power = 0.05f;
+        itemAudio.clip = pattern3RotClip;
+        itemAudio.loop = true;
+        itemAudio.Play();
         progress = 0;
         float time = 0;
         float randTime = Random.Range(9.5f, 11);
@@ -501,15 +590,21 @@ public class firstEnemy : MonoBehaviour {
             }
             yield return null;
         }
-
+        itemAudio.Stop();
         // 날을 접음
         yield return new WaitForSeconds(0.5f);
+        itemAudio.clip = pattern3LenghtClip;
+        itemAudio.loop = false;
+        itemAudio.Play();
+        knife.GetComponent<EnemyAttack>().isAtkTime = false;
         progress = 0;
         while (progress < 1) {
             progress += 0.01f;
             knife.localScale = Vector3.Lerp(new Vector3(100, 0.2f, 3), new Vector3(5, 0.2f, 3), progress);
             yield return null;
         }
+        itemAudio.Stop();
+        
 
         // 오브젝트를 올려보냄
         yield return new WaitForSeconds(0.3f);
@@ -530,6 +625,7 @@ public class firstEnemy : MonoBehaviour {
         GameObject item = ObjectManager.instance.GetObject("pattern3Plus");
         pattern3PlusObjects.Add(item);
         item.transform.position = zone.transform.position + Vector3.up * 20;
+        AudioSource itemAudio = item.GetComponent<AudioSource>();
         ObjectManager.instance.ReturnObject(zone, "dangerZone");
         float progress = 0;
         Vector3 itemVec = item.transform.position;
@@ -541,6 +637,9 @@ public class firstEnemy : MonoBehaviour {
 
         yield return new WaitForSeconds(0.5f);
         // 날을 늘린다.
+        itemAudio.clip = pattern3LenghtClip;
+        itemAudio.loop = true;
+        itemAudio.Play();
         progress = 0;
         Transform knife = item.transform.GetChild(1);
         while (progress < 1) {
@@ -548,10 +647,15 @@ public class firstEnemy : MonoBehaviour {
             knife.localScale = Vector3.Lerp(new Vector3(5, 0.2f, 3), new Vector3(100, 0.2f, 3), progress);
             yield return null;
         }
+        itemAudio.Stop();
 
+        knife.GetComponent<EnemyAttack>().isAtkTime = true;
         pattern3PlusFollow = true;
         yield return new WaitForSeconds(0.5f);
         // 날을 돌림
+        itemAudio.clip = pattern3RotClip;
+        itemAudio.loop = true;
+        itemAudio.Play();
         float power = 0.05f;
         progress = 0;
         float time = 0;
@@ -577,16 +681,21 @@ public class firstEnemy : MonoBehaviour {
             }
             yield return null;
         }
-
+        itemAudio.Stop();
         pattern3PlusFollow = false;
         // 날을 접음
         yield return new WaitForSeconds(0.5f);
+        itemAudio.clip = pattern3LenghtClip;
+        itemAudio.loop = false;
+        itemAudio.Play();
+        knife.GetComponent<EnemyAttack>().isAtkTime = false;
         progress = 0;
         while (progress < 1) {
             progress += 0.01f;
             knife.localScale = Vector3.Lerp(new Vector3(100, 0.2f, 3), new Vector3(5, 0.2f, 3), progress);
             yield return null;
         }
+        itemAudio.Stop();
 
         // 오브젝트를 올려보냄
         yield return new WaitForSeconds(0.3f);

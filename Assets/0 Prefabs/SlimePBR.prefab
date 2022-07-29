@@ -103,6 +103,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2223577695802103004}
   - component: {fileID: 2221425677542940112}
+  - component: {fileID: 5793540763067271237}
   m_Layer: 7
   m_Name: Body
   m_TagString: Enemy
@@ -138,7 +139,21 @@ SphereCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.45
-  m_Center: {x: -0.27, y: 0.06, z: 0}
+  m_Center: {x: -0.35, y: 0.1, z: 0}
+--- !u!114 &5793540763067271237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2220597650556594864}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c846f8575e89a7a4b8471859905a269e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dmg: 25
+  isAtkTime: 0
 --- !u!1 &2220617684446290238
 GameObject:
   m_ObjectHideFlags: 0
@@ -403,7 +418,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 94
+  m_Constraints: 90
   m_CollisionDetection: 0
 --- !u!135 &2221425676960823733
 SphereCollider:
@@ -434,7 +449,14 @@ MonoBehaviour:
   pillarPrefab: {fileID: 5565084021662132801, guid: 814a7702db7c92b48bf5c91e83ebab3c, type: 3}
   pattern2Particle: {fileID: 4777751087944010234, guid: 186b7485793832c44b99a11c37f98f4c, type: 3}
   pattern3Prefab: {fileID: 3517566922857432113, guid: e8024717e75967846860d6195f9e16d9, type: 3}
+  atkScript: {fileID: 5793540763067271237}
   isGround: 0
+  isGetHitTime: 0
+  pattern1Clip: {fileID: 8300000, guid: 5ae4d298ed547ba4c88587effb75d7e1, type: 3}
+  pattern2Clip: {fileID: 8300000, guid: 1fd31868d68903d4f9e2c4a3b7ef98f3, type: 3}
+  pattern3LenghtClip: {fileID: 8300000, guid: 070779cdcfbe3ff4688691fb33bc3e4e, type: 3}
+  pattern3RotClip: {fileID: 8300000, guid: 7dc48ac47b618424f8d032a339525809, type: 3}
+  pattern3PlusObjects: []
 --- !u!1 &2221126959136842100
 GameObject:
   m_ObjectHideFlags: 0
