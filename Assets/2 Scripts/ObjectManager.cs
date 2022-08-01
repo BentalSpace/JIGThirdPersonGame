@@ -16,12 +16,15 @@ public class ObjectManager : MonoBehaviour
     GameObject pattern3Prefab;
     [SerializeField]
     GameObject pattern3PlusPrefab;
+    [SerializeField]
+    GameObject explosionEffectPrefab;
 
     Queue<GameObject> dangerZone;
     Queue<GameObject> pillar;
     Queue<GameObject> pillarPlus;
     Queue<GameObject> pattern3;
     Queue<GameObject> pattern3Plus;
+    Queue<GameObject> explosionEffect;
 
     void Awake() {
         instance = this;
@@ -43,14 +46,17 @@ public class ObjectManager : MonoBehaviour
         if (pattern3PlusPrefab) {
             Initialize(pattern3Plus, 5, "pattern3Plus");
         }
+        if (explosionEffectPrefab) {
+            Initialize(explosionEffect, 100, "explosion");
+        }
     }
-
     void QueueReset() {
         dangerZone = new Queue<GameObject>();
         pillar = new Queue<GameObject>();
         pillarPlus = new Queue<GameObject>();
         pattern3 = new Queue<GameObject>();
         pattern3Plus = new Queue<GameObject>();
+        explosionEffect = new Queue<GameObject>();
     }
     //오브젝트를 만드는 함수(CreateNewObject())를 호출해서 큐에 집어넣는 함수.
     void Initialize(Queue<GameObject> obj, int cnt, string name) {
@@ -88,6 +94,9 @@ public class ObjectManager : MonoBehaviour
                 break;
             case "pattern3Plus":
                 targetPool = pattern3Plus;
+                break;
+            case "explosion":
+                targetPool = explosionEffect;
                 break;
             default:
                 Debug.Log("GetObject not find name Error");
@@ -141,6 +150,9 @@ public class ObjectManager : MonoBehaviour
             case "pattern3Plus":
                 returnObj = pattern3PlusPrefab;
                 break;
+            case "explosion":
+                returnObj = explosionEffectPrefab;
+                break;
             default:
                 Debug.Log("SearchPrefab not find name Error");
                 break;
@@ -166,6 +178,9 @@ public class ObjectManager : MonoBehaviour
                 break;
             case "pattern3Plus":
                 returnQueue = pattern3Plus;
+                break;
+            case "explosion":
+                returnQueue = explosionEffect;
                 break;
             default:
                 Debug.Log("SearchQueue not find name Error");

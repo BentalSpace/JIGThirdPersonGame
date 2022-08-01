@@ -137,9 +137,9 @@ public class PlayerCtrl : MonoBehaviour
 
         anim.SetBool("isMove", isMove);
         if (isMove) {
-            Vector3 lookForward = new Vector3(cam.forward.x, 0f, cam.forward.z).normalized;
-            Vector3 lookRight = new Vector3(cam.right.x, 0f, cam.right.z).normalized;
-            Vector3 moveDir = lookForward * moveInput.y + lookRight * moveInput.x;
+            Vector3 lookForward = new Vector3(cam.forward.x, 0f, cam.forward.z);
+            Vector3 lookRight = new Vector3(cam.right.x, 0f, cam.right.z);
+            Vector3 moveDir = (lookForward * moveInput.y + lookRight * moveInput.x).normalized;
             transform.forward = moveDir;
             Vector3 moveVec = new Vector3(moveDir.x, 0, moveDir.z) * applySpeed;
             moveVec.y = rigid.velocity.y;
@@ -168,7 +168,6 @@ public class PlayerCtrl : MonoBehaviour
     void DoubleJump() {
         if (Input.GetButtonDown("Jump") && !isDJump && !isGround) {
             isDJump = true;
-            Debug.Log("DJUIMP");
             rigid.velocity = Vector3.zero;
             rigid.AddForce(Vector3.up * jumpPower, ForceMode.Impulse);
             anim.SetTrigger("DJump");
@@ -200,7 +199,6 @@ public class PlayerCtrl : MonoBehaviour
         }
         isAtk = false;
         anim.SetTrigger("AtkEnd");
-        Debug.Log("First");
     }
 
     // 두번째 베기 공격
@@ -228,7 +226,6 @@ public class PlayerCtrl : MonoBehaviour
         }
         isAtk = false;
         anim.SetTrigger("AtkEnd");
-        Debug.Log("Second");
     }
 
     // 찌르기 공격
@@ -243,12 +240,10 @@ public class PlayerCtrl : MonoBehaviour
         yield return new WaitForSeconds(0.2f);
         isAtk = false;
         anim.SetTrigger("AtkEnd");
-        Debug.Log("Stab");
     }
 
     // 회전 공격
     IEnumerator RotAttack() {
-        Debug.Log("RotStart");
         anim.SetTrigger("RotAtk");
         isAtk = false;
         isRotAtk = true;
@@ -271,7 +266,6 @@ public class PlayerCtrl : MonoBehaviour
                     applySpeed = walkSpeed;
                 rotAtkCol.SetActive(false);
                 anim.SetTrigger("AtkEnd");
-                Debug.Log("Rot1");
                 yield break;
             }
             if(time > 0.2f) {
@@ -290,7 +284,6 @@ public class PlayerCtrl : MonoBehaviour
             applySpeed = walkSpeed;
         rotAtkCol.SetActive(false);
         anim.SetTrigger("AtkEnd");
-        Debug.Log("Rot2");
     }
     public void HpDown(float dmg) {
         curHp -= dmg;
@@ -300,7 +293,6 @@ public class PlayerCtrl : MonoBehaviour
             CamCtrl.dontCtrl = true;
             Invoke("GameOver", 1f);
         }
-        Debug.Log("플레이어HP - " + curHp);
     }
     void GameOver() {
         gameOverPanel.SetActive(true);

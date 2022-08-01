@@ -1963,10 +1963,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -3568,6 +3568,7 @@ MonoBehaviour:
   pillarPlusPrefab: {fileID: 4654410084455043763, guid: 8f0f6cafd6347f245a9247e61bb552c2, type: 3}
   pattern3Prefab: {fileID: 3517566922857432113, guid: e8024717e75967846860d6195f9e16d9, type: 3}
   pattern3PlusPrefab: {fileID: 3517566922857432113, guid: 8a79bd085ffce4b4e8dee9a3559d174d, type: 3}
+  explosionEffectPrefab: {fileID: 0}
 --- !u!4 &1867806407
 Transform:
   m_ObjectHideFlags: 0

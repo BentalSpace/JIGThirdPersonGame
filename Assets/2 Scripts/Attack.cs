@@ -18,16 +18,23 @@ public class Attack : MonoBehaviour
     void Awake() {
     }
     void OnTriggerEnter(Collider other) {
-        if (other.CompareTag("Enemy") && other.gameObject != hitTarget && other.GetComponentInParent<firstEnemy>().isGetHitTime) {
+
+        if (other.GetComponentInParent<firstEnemy>()) {
+            if (other.CompareTag("Enemy") && other.gameObject != hitTarget && other.GetComponentInParent<firstEnemy>().isGetHitTime) {
+                Instantiate(hitEffect, transform.position, transform.rotation, null);
+                audio.clip = atkClip;
+                audio.Play();
+                StartCoroutine(Camera.main.GetComponent<Shake>().ShakeCamera());
+                GetComponentInParent<Animator>().speed = 0;
+                Invoke("SpeedBack", 0.1f);
+                other.GetComponentInParent<firstEnemy>().HpDown(dmg);
+                hitTarget = other.gameObject;
+                Debug.Log(dmg);
+            }
+        }
+        else if (other.CompareTag("Enemy")) {
             Instantiate(hitEffect, transform.position, transform.rotation, null);
-            audio.clip = atkClip;
-            audio.Play();
             StartCoroutine(Camera.main.GetComponent<Shake>().ShakeCamera());
-            GetComponentInParent<Animator>().speed = 0;
-            Invoke("SpeedBack", 0.1f);
-            other.GetComponentInParent<firstEnemy>().HpDown(dmg);
-            hitTarget = other.gameObject;
-            Debug.Log(dmg);
         }
     }
     void SpeedBack() {
