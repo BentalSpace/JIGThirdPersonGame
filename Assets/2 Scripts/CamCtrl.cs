@@ -9,6 +9,7 @@ public class CamCtrl : MonoBehaviour
     float yMove;
 
     public static bool dontCtrl;
+    public static bool dontLimit;
 
     [SerializeField, Tooltip("카메라와 타겟의 거리")]
     float distance;
@@ -51,17 +52,21 @@ public class CamCtrl : MonoBehaviour
         Vector3 reserveDistance = new Vector3(0, 0, distance);
 
         transform.position = target.transform.position - transform.rotation * reserveDistance + (Vector3.up * 1);
+        //Vector3 pos = target.transform.position - transform.rotation * reserveDistance + (Vector3.up * 1);
+        //transform.position = Vector3.Slerp(transform.position, pos, Time.deltaTime * 30);
     }
     void LookAround() {
         Vector2 mouseDelta = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
         Vector3 camAngle = transform.rotation.eulerAngles;
         float x = camAngle.x - (mouseDelta.y * xSensitivity);
 
-        if (x < 180f) {
-            x = Mathf.Clamp(x, -1f, 70f);
-        }
-        else {
-            x = Mathf.Clamp(x, 360f, 361f);
+        if (!dontLimit) {
+            if (x < 180f) {
+                x = Mathf.Clamp(x, -1f, 70f);
+            }
+            else {
+                x = Mathf.Clamp(x, 360f, 361f);
+            }
         }
 
         transform.rotation = Quaternion.Euler(x, camAngle.y + (mouseDelta.x * ySensitivity), camAngle.z) ;

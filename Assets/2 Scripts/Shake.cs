@@ -15,11 +15,13 @@ public class Shake : MonoBehaviour
     }
 
     public IEnumerator ShakeCamera(float duration = 0.1f, float magnitudePos = 0.3f, float magnitudeRot = 0.1f) {
+        Debug.Log("SHAKE");
         originPos = camTr.localPosition;
         originRot = camTr.localRotation;
         float passTime = 0.0f;
 
         while(passTime < duration) {
+            Debug.Log("SHAKE");
             Vector3 shakePos = Random.insideUnitSphere;
             camTr.localPosition = originPos + shakePos * magnitudePos;
 

@@ -30,7 +30,19 @@ public class Stage2Pattern1 : MonoBehaviour
             upObject.transform.position = Vector3.Lerp(upObjOriginPos, upObjOriginPos + Vector3.up * 4f, progress / 1);
             yield return new WaitForSeconds(0.05f);
         }
+
+        // 다시 내려감
+        yield return new WaitForSeconds(8f);
+        progress = 0;
+        while (progress < 1) {
+            progress += 0.1f;
+            upObject.transform.position = Vector3.Lerp(upObjOriginPos + Vector3.up * 4f, upObjOriginPos, progress / 1);
+            yield return new WaitForSeconds(0.05f);
+        }
+        isActive = false;
     }
+
+    //퍼즐 클리어
     public void Hit() {
         if (type == Type.Pillar) {
             upObject.SetActive(false);
