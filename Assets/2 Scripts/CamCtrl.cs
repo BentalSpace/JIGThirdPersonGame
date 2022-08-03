@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CamCtrl : MonoBehaviour
 {
-    Transform target;
+    public Transform target;
     float xMove;
     float yMove;
 
@@ -51,9 +51,9 @@ public class CamCtrl : MonoBehaviour
         }
         Vector3 reserveDistance = new Vector3(0, 0, distance);
 
-        transform.position = target.transform.position - transform.rotation * reserveDistance + (Vector3.up * 1);
-        //Vector3 pos = target.transform.position - transform.rotation * reserveDistance + (Vector3.up * 1);
-        //transform.position = Vector3.Slerp(transform.position, pos, Time.deltaTime * 30);
+        //transform.position = target.transform.position - transform.rotation * reserveDistance + (Vector3.up * 1);
+        Vector3 vec = target.transform.position - (transform.rotation * reserveDistance) + (Vector3.up * 1);
+        transform.position = Vector3.Slerp(transform.position, vec, Time.deltaTime * 500);
     }
     void LookAround() {
         Vector2 mouseDelta = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));

@@ -50,7 +50,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   expEffect: {fileID: 100008, guid: 1dbc518224e49f34095aab42fe05751a, type: 3}
   fireParticle: {fileID: 2977121785587283454}
+  MissilePrefab: {fileID: 2977121785908450182}
   target: {fileID: 0}
+  isChase: 0
 --- !u!54 &2530896669234056260
 Rigidbody:
   m_ObjectHideFlags: 0

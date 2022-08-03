@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class secondEnemy : MonoBehaviour
 {
+    /*
+     * 체력 : 200
+     * 페이즈1 : 체력이 120이 될때까지, 패턴1 사용-> 플레이어가 공격 ->  패턴 2 사용 -> 패턴 1 사용 -> 플레이어가 공격.
+     * 페이즈2 : 체력이 60(미사일 2대 맞추기)이 될때까지, 패턴3 공격 (미사일은 일정시간 간격으로 맵에 배치 되는 개수는 3개 이하), 미사일의 공격력은 30
+     * 페이즈3 : 강화 패턴2 사용, (일정시간 간격으로)우주선 찍기 공격.(찍으면 그 자리에 지속피해를 주는 장판 생성.) 3번 -> 미사일공격 -> 3번 찍기 -> 패턴1(사용 하면 패턴2 정지) -> 3번 찍기 -> 미사일 -> 3번 찍기 -> 패턴1 (그 와중에 강화패턴2는 지속적으로 실행)
+    */
     Transform target;
     [SerializeField]
     Transform laserPos;
@@ -11,6 +17,13 @@ public class secondEnemy : MonoBehaviour
     Transform laserDoublePos;
     [SerializeField]
     GameObject laser;
+
+    int phase;
+    int phase1Cnt;
+    // 스테이터스
+    float hp;
+    float maxHp;
+    float targetHp;
 
     // 패턴1 관리 변수
     public bool doPattern1;
@@ -56,24 +69,43 @@ public class secondEnemy : MonoBehaviour
         pattern2Dis = 0;
         pattern2RotPower = 0.01f;
         savePos = 999;
+
+        phase = 1;
+        phase1Cnt = 2;
+        maxHp = 200;
+        hp = maxHp;
+        targetHp = 0;
     }
     void Start() {
+        laser.SetActive(false);
         // 패턴1
-        //StartCoroutine(Pattern1());
         //StartCoroutine(Pattern1Frame());
         //StartCoroutine(Pattern2());
+        //StartCoroutine(Pattern3Frame(1));
 
         // 패턴3
-        GameObject missile = Instantiate(missilePrefab, transform.position, Quaternion.identity);
-        missile.transform.LookAt(target);
-        Vector3 vec = missile.transform.localEulerAngles;
-        vec.x = -60f;
-        missile.transform.localEulerAngles = vec;
-        missile.GetComponent<Stage2Missile>().target = target;
-        missile.GetComponent<Rigidbody>().AddForce(missile.transform.forward * 10f, ForceMode.Impulse);
-        missile.GetComponent<Stage2Missile>().ChaseCon();
+        //GameObject missile = ObjectManager.instance.GetObject("st2Pattern3");
+        //missile.transform.position = transform.position;
+        //missile.transform.LookAt(target);
+        //Vector3 vec = missile.transform.localEulerAngles;
+        //vec.x = -60f;
+        //missile.transform.localEulerAngles = vec;
+        //missile.GetComponent<Rigidbody>().AddForce(missile.transform.forward * 10f, ForceMode.VelocityChange);
+        //missile.GetComponent<Stage2Missile>().ChaseCon();
     }
     void Update() {
+        if(phase == 1) {
+            targetHp = 120;
+            if(phase1Cnt == 0) {
+                StartCoroutine(Pattern1Frame());
+                phase1Cnt++;
+            }
+            if(phase1Cnt == 2) {
+                StartCoroutine(Pattern2());
+                phase1Cnt++;
+            }
+        }
+
         // 패턴1
         // 시작할때 laser의 setactive를 true로 변경해줘야 함.
         if (doPattern1 && !PlayerCtrl.dontCtrl) {
@@ -104,7 +136,7 @@ public class secondEnemy : MonoBehaviour
                 }
                 if (hit.collider.CompareTag("Puzzle")) {
 
-                    //타격
+                    //타격 (스턴)
                     pattern1DmgTime = 0;
                     doPattern1 = false;
                     pattern1PuzzleEffect.transform.position = hit.collider.transform.position;
@@ -177,6 +209,10 @@ public class secondEnemy : MonoBehaviour
         }
         box.enabled = true;
         sphere.enabled = true;
+
+        if (phase == 1) {
+            phase1Cnt++;
+        }
     }
     IEnumerator Pattern1Frame() {
         laser.transform.localScale = Vector3.one;
@@ -188,6 +224,7 @@ public class secondEnemy : MonoBehaviour
             yield return null;
         }
         
+        // 랜덤한 위치
         switch (rand) {
             case 0:
                 pattern1PuzzleObj[0].transform.position = new Vector3(-16f, 65.4f, -21f);
@@ -216,6 +253,23 @@ public class secondEnemy : MonoBehaviour
         pattern1PuzzleObj[1].transform.position = pattern1PuzzleObj[0].transform.position + Vector3.down * 1.4f;
         pattern1PuzzleObj[1].transform.position += pattern1PuzzleObj[0].transform.forward * Random.Range(-10f, -15f) + pattern1PuzzleObj[0].transform.right * Random.Range(-3f, 3f);
         savePos = rand;
+    }
+    IEnumerator Pattern3Frame(float missileCnt) {
+        // 미사일 공격
+        for (int i = 0; i < missileCnt; i++) {
+            GameObject missile = ObjectManager.instance.GetObject("st2Pattern3");
+            missile.transform.position = transform.position;
+            missile.transform.LookAt(target);
+            Vector3 vec = missile.transform.localEulerAngles;
+            vec.x = -60f;
+            vec.y += Random.Range(-30f, 30f);
+            missile.transform.localEulerAngles = vec;
+            missile.GetComponent<Rigidbody>().AddForce(missile.transform.forward * 10f, ForceMode.VelocityChange);
+            missile.GetComponent<Stage2Missile>().ChaseCon();
+
+            yield return new WaitForSeconds(Random.Range(0.3f, 1f));
+        }
+        yield return null;
     }
     IEnumerator Pattern1(RaycastHit hit) {
         // 레이저를 맞춘 위치에 파티클 생성 2초 후 제거
@@ -304,5 +358,9 @@ public class secondEnemy : MonoBehaviour
     }
     IEnumerator Pattern3() {
         yield return null;
+    }
+    public void HpDown(float dmg) {
+        hp -= dmg;
+        Debug.Log(hp);
     }
 }

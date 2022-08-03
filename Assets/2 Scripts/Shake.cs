@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Shake : MonoBehaviour
 {
+    public static Shake instance;
+
     Transform camTr;
     bool shakeRotate;
 
@@ -11,17 +13,17 @@ public class Shake : MonoBehaviour
     Quaternion originRot;
 
     void Awake() {
+        instance = this;
         camTr = Camera.main.transform;
     }
 
     public IEnumerator ShakeCamera(float duration = 0.1f, float magnitudePos = 0.3f, float magnitudeRot = 0.1f) {
-        Debug.Log("SHAKE");
+        // duration = 시간 | magnitudePos = 화면이 흔들리는 강도라고 생각하면 됨. | magnitudeRot = 회전 흔들림 강도 (shakeRotate를 true로 만들어야 작동)
         originPos = camTr.localPosition;
         originRot = camTr.localRotation;
         float passTime = 0.0f;
 
         while(passTime < duration) {
-            Debug.Log("SHAKE");
             Vector3 shakePos = Random.insideUnitSphere;
             camTr.localPosition = originPos + shakePos * magnitudePos;
 
@@ -35,5 +37,8 @@ public class Shake : MonoBehaviour
         }
         camTr.localPosition = originPos;
         camTr.localRotation = originRot;
+    }
+    public void ShakeCoroutine(float duration = 0.1f, float magnitudePos = 0.3f, float magnitudeRot = 0.1f) {
+        StartCoroutine(ShakeCamera(duration, magnitudePos, magnitudeRot));
     }
 }
