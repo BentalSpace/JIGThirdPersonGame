@@ -13,6 +13,8 @@ public class Stage2Missile : MonoBehaviour
     public Transform target;
     public bool isChase;
 
+    secondEnemy enemy;
+
     float chaseTime;
 
     Rigidbody rigid;
@@ -23,10 +25,16 @@ public class Stage2Missile : MonoBehaviour
     bool playerUpMissile;
     Transform cam;
 
-    float selfBoomCurTime;
+    public float selfBoomCurTime;
+    bool isHit;
 
     CapsuleCollider capsule;
+    void OnEnable() {
+        selfBoomCurTime = 0;
+        isHit = false;
+    }
     private void Awake() {
+        enemy = GameObject.Find("UFO").GetComponent<secondEnemy>();
         target = GameObject.Find("Player").transform;
         rigid = GetComponent<Rigidbody>();
         capsule = transform.GetChild(0).GetComponent<CapsuleCollider>();
@@ -35,6 +43,9 @@ public class Stage2Missile : MonoBehaviour
         turningForce = 5;
     }
     void Update() {
+        if (Time.timeScale == 0) {
+            return;
+        }
         // 플레이어를 쫓음.
         if (isChase) {
             chaseTime += Time.deltaTime;
@@ -75,16 +86,19 @@ public class Stage2Missile : MonoBehaviour
             if (dis < 5) {
                 target.GetComponent<PlayerCtrl>().HpDown(20/dis);
             }
-            target.localEulerAngles = new Vector3(0, target.localEulerAngles.y, 0);
-            playerUpMissile = false;
-            isControl = false;
-            PlayerCtrl.dontCtrl = false;
-            CamCtrl.dontLimit = false;
+            if (playerUpMissile) {
+                target.localEulerAngles = new Vector3(0, target.localEulerAngles.y, 0);
+                playerUpMissile = false;
+                isControl = false;
+                PlayerCtrl.dontCtrl = false;
+                CamCtrl.dontLimit = false;
+                target.GetComponent<Rigidbody>().velocity = Vector3.zero;
+                target.GetComponent<Rigidbody>().constraints = ~RigidbodyConstraints.FreezePosition;
+            }
             Instantiate(expEffect, transform.position, Quaternion.identity);
             ObjectManager.instance.ReturnObject(gameObject, "st2Pattern3");
+            enemy.curMissileCnt--;
 
-            target.GetComponent<Rigidbody>().velocity = Vector3.zero;
-            target.GetComponent<Rigidbody>().constraints = ~RigidbodyConstraints.FreezePosition;
         }
 
         // 컨트롤 관리
@@ -114,6 +128,11 @@ public class Stage2Missile : MonoBehaviour
             }
         }
     }
+    public void Boom() {
+        Instantiate(expEffect, transform.position, Quaternion.identity);
+        ObjectManager.instance.ReturnObject(gameObject, "st2Pattern3");
+        enemy.curMissileCnt--;
+    }
     void LookAtTarget() {
         Quaternion lookRotation = Quaternion.LookRotation((target.position + Vector3.up * 2f) - transform.position);
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, turningForce * Time.deltaTime);
@@ -129,15 +148,31 @@ public class Stage2Missile : MonoBehaviour
         isControl = false;
     }
     void OnTriggerEnter(Collider other) {
-        if (other.CompareTag("Player") && isChase) {
+        if (other.CompareTag("Player") && (isChase || !playerUpMissile)) {
             // 플레이어 공격
             Shake.instance.ShakeCoroutine(0.8f, 1f);
             Instantiate(expEffect, target.position, Quaternion.identity);
             target.GetComponent<PlayerCtrl>().HpDown(30);
             ObjectManager.instance.ReturnObject(gameObject, "st2Pattern3");
+            enemy.curMissileCnt--;
+        }
+        if (!isControl) {
+            if (other.CompareTag("Wall")) {
+                Shake.instance.ShakeCoroutine(0.4f, 0.8f);
+                Instantiate(expEffect, transform.position, Quaternion.identity);
+                if (playerUpMissile) {
+                    Hit();
+                }
+                else if (!isHit) {
+                    StartCoroutine(ReturnObj());
+                    enemy.curMissileCnt--;
+                }
+            }
         }
         if (isControl) {
-            if (other.CompareTag("Ground")) {
+            if (isHit)
+                return;
+            if (other.CompareTag("Ground") || other.CompareTag("Wall")) {
                 Shake.instance.ShakeCoroutine(0.4f, 0.8f);
                 Instantiate(expEffect, transform.position, Quaternion.identity);
                 Hit();
@@ -155,7 +190,15 @@ public class Stage2Missile : MonoBehaviour
                 if (playerUpMissile) {
                     target.GetComponent<PlayerCtrl>().HpDown(15);
                 }
-
+            }
+            if (other.CompareTag("Missile")) {
+                Shake.instance.ShakeCoroutine(0.4f, 0.8f);
+                Instantiate(expEffect, transform.position, Quaternion.identity);
+                Hit();
+                if (playerUpMissile) {
+                    target.GetComponent<PlayerCtrl>().HpDown(15);
+                }
+                other.GetComponent<Stage2Missile>().Boom();
             }
         }
     }
@@ -185,7 +228,7 @@ public class Stage2Missile : MonoBehaviour
         speed = 0;
         rigid.velocity = Vector3.zero;
         rigid.useGravity = false;
-        rigid.AddForce(transform.forward * 10f, ForceMode.VelocityChange);
+        rigid.AddForce(transform.forward * 30f, ForceMode.VelocityChange);
 
         capsule.isTrigger = true;
         yield return new WaitForSeconds(0.7f);
@@ -194,11 +237,19 @@ public class Stage2Missile : MonoBehaviour
         isControl = true;
     }
     void Hit() {
-        ObjectManager.instance.ReturnObject(gameObject, "st2Pattern3");
+        if (!isHit) {
+            StartCoroutine(ReturnObj());
+            enemy.curMissileCnt--;
+        }
         CamCtrl.dontLimit = false;
         PlayerCtrl.dontCtrl = false;
         target.localEulerAngles = new Vector3(0, target.localEulerAngles.y, 0);
         target.GetComponent<Rigidbody>().velocity = Vector3.zero;
         target.GetComponent<Rigidbody>().constraints = ~RigidbodyConstraints.FreezePosition;
+    }
+    IEnumerator ReturnObj() {
+        isHit = true;
+        yield return new WaitForSeconds(0.1f);
+        ObjectManager.instance.ReturnObject(gameObject, "st2Pattern3");
     }
 }

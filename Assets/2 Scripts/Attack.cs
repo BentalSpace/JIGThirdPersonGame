@@ -32,6 +32,18 @@ public class Attack : MonoBehaviour
                 Debug.Log(dmg);
             }
         }
+        if (other.GetComponentInParent<secondEnemy>()) {
+            if(other.CompareTag("Enemy") && other.GetComponent<SphereCollider>()) {
+                Instantiate(hitEffect, transform.position, transform.rotation, null);
+                audio.clip = atkClip;
+                audio.Play();
+                StartCoroutine(Camera.main.GetComponent<Shake>().ShakeCamera());
+                GetComponentInParent<Animator>().speed = 0;
+                Invoke("SpeedBack", 0.1f);
+                other.GetComponentInParent<secondEnemy>().HpDown(dmg);
+                hitTarget = other.gameObject;
+            }
+        }
         else if (other.CompareTag("Enemy")) {
             Instantiate(hitEffect, transform.position, transform.rotation, null);
             StartCoroutine(Camera.main.GetComponent<Shake>().ShakeCamera());

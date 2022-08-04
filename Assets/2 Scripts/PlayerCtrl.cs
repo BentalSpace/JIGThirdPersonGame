@@ -179,7 +179,7 @@ public class PlayerCtrl : MonoBehaviour
         anim.SetTrigger("FirstAtk");
         yield return new WaitForSeconds(0.13f);
         normalAtkCol.SetActive(true);
-        normalAtkCol.GetComponent<Attack>().dmg = 151f;
+        normalAtkCol.GetComponent<Attack>().dmg = 2.5f;
         isAtk = true;
         float time = 0;
         float maxTime = 0.3f;

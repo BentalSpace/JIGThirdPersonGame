@@ -9,11 +9,14 @@ public class Stage2Pattern1 : MonoBehaviour
     Type type;
 
     [SerializeField]
-    GameObject upObject;
+    GameObject friendObject;
 
     Vector3 upObjOriginPos;
-    bool isActive;
+    public bool isActive;
 
+    void Awake() {
+        gameObject.SetActive(false);
+    }
     void OnCollisionEnter(Collision collision) {
         if (type == Type.Pillar)
             return;
@@ -24,10 +27,10 @@ public class Stage2Pattern1 : MonoBehaviour
     IEnumerator ObjectUp() {
         isActive = true;
         float progress = 0;
-        upObjOriginPos = new Vector3(upObject.transform.position.x, 64, upObject.transform.position.z);
+        upObjOriginPos = new Vector3(friendObject.transform.position.x, 64, friendObject.transform.position.z);
         while(progress < 1) {
             progress+=0.1f;
-            upObject.transform.position = Vector3.Lerp(upObjOriginPos, upObjOriginPos + Vector3.up * 4f, progress / 1);
+            friendObject.transform.position = Vector3.Lerp(upObjOriginPos, upObjOriginPos + Vector3.up * 4f, progress / 1);
             yield return new WaitForSeconds(0.05f);
         }
 
@@ -36,7 +39,7 @@ public class Stage2Pattern1 : MonoBehaviour
         progress = 0;
         while (progress < 1) {
             progress += 0.1f;
-            upObject.transform.position = Vector3.Lerp(upObjOriginPos + Vector3.up * 4f, upObjOriginPos, progress / 1);
+            friendObject.transform.position = Vector3.Lerp(upObjOriginPos + Vector3.up * 4f, upObjOriginPos, progress / 1);
             yield return new WaitForSeconds(0.05f);
         }
         isActive = false;
@@ -45,9 +48,9 @@ public class Stage2Pattern1 : MonoBehaviour
     //ÆÛÁñ Å¬¸®¾î
     public void Hit() {
         if (type == Type.Pillar) {
-            upObject.SetActive(false);
+            friendObject.SetActive(false);
             gameObject.SetActive(false);
-            isActive = false;
+            friendObject.GetComponent<Stage2Pattern1>().isActive = false;
         }
     }
 }

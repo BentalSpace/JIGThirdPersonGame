@@ -9,6 +9,8 @@ TagManager:
   - FxTemporaire
   - Puzzle
   - Ground
+  - Missile
+  - Wall
   layers:
   - Default
   - TransparentFX

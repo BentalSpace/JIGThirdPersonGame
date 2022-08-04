@@ -72,6 +72,10 @@ public class Stage2Pattern2Projectile : MonoBehaviour
             mat.color = Color.Lerp(new Color32(224, 54, 54, 100), new Color32(224, 54, 54, 0), progress / 1);
             yield return new WaitForSeconds(0.05f);
         }
+        mat.color = new Color32(224, 54, 54, 255);
+        transform.localScale = Vector3.one;
+        particle.SetActive(true);
         ObjectManager.instance.ReturnObject(gameObject, "st2Pattern2");
+
     }
 }

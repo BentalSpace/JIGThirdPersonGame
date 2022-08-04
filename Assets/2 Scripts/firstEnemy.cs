@@ -75,7 +75,7 @@ public class firstEnemy : MonoBehaviour {
         targetHp = 0;
         pattern1MaxTime = 3.3f;
         phase = 1;
-        isGetHitTime = true;
+        isGetHitTime = false;
         phase1AtkCnt = Random.Range(2, 4);
         phase1Cnt = 0;
         phase1Pattern = 0;
@@ -229,7 +229,7 @@ public class firstEnemy : MonoBehaviour {
     }
     void FixedUpdate() {
         //플레이어를 계속 쳐다보는 코드
-        if (!isGetHitTime || phase <= 3) {
+        if (!isGetHitTime || phase > 3) {
             Vector3 targetPosition = new Vector3(target.position.x, transform.position.y, target.position.z);
             transform.LookAt(targetPosition);
         }

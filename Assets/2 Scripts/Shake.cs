@@ -39,6 +39,7 @@ public class Shake : MonoBehaviour
         camTr.localRotation = originRot;
     }
     public void ShakeCoroutine(float duration = 0.1f, float magnitudePos = 0.3f, float magnitudeRot = 0.1f) {
+        StopAllCoroutines();
         StartCoroutine(ShakeCamera(duration, magnitudePos, magnitudeRot));
     }
 }
