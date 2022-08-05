@@ -22,6 +22,8 @@ public class ObjectManager : MonoBehaviour
     GameObject st2Pattern2Prefab;
     [SerializeField]
     GameObject st2Pattern3MissilePrefab;
+    [SerializeField]
+    GameObject downAtkPrefab;
 
     Queue<GameObject> dangerZone;
     Queue<GameObject> pillar;
@@ -31,6 +33,7 @@ public class ObjectManager : MonoBehaviour
     Queue<GameObject> explosionEffect;
     Queue<GameObject> st2Pattern2;
     Queue<GameObject> st2Pattern3Missile;
+    Queue<GameObject> downAtk;
 
     void Awake() {
         instance = this;
@@ -61,6 +64,9 @@ public class ObjectManager : MonoBehaviour
         if (st2Pattern3MissilePrefab) {
             Initialize(st2Pattern3Missile, 10, "st2Pattern3");
         }
+        if (downAtkPrefab) {
+            Initialize(downAtk, 20, "downAtk");
+        }
     }
     void QueueReset() {
         dangerZone = new Queue<GameObject>();
@@ -71,6 +77,7 @@ public class ObjectManager : MonoBehaviour
         explosionEffect = new Queue<GameObject>();
         st2Pattern2 = new Queue<GameObject>();
         st2Pattern3Missile = new Queue<GameObject>();
+        downAtk = new Queue<GameObject>();
     }
     //오브젝트를 만드는 함수(CreateNewObject())를 호출해서 큐에 집어넣는 함수.
     void Initialize(Queue<GameObject> obj, int cnt, string name) {
@@ -117,6 +124,9 @@ public class ObjectManager : MonoBehaviour
                 break;
             case "st2Pattern3":
                 targetPool = st2Pattern3Missile;
+                break;
+            case "downAtk":
+                targetPool = downAtk;
                 break;
             default:
                 Debug.Log("GetObject not find name Error");
@@ -179,6 +189,9 @@ public class ObjectManager : MonoBehaviour
             case "st2Pattern3":
                 returnObj = st2Pattern3MissilePrefab;
                 break;
+            case "downAtk":
+                returnObj = downAtkPrefab;
+                break;
             default:
                 Debug.Log("SearchPrefab not find name Error");
                 break;
@@ -213,6 +226,9 @@ public class ObjectManager : MonoBehaviour
                 break;
             case "st2Pattern3":
                 returnQueue = st2Pattern3Missile;
+                break;
+            case "downAtk":
+                returnQueue = downAtk;
                 break;
             default:
                 Debug.Log("SearchQueue not find name Error");

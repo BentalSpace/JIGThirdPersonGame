@@ -29,15 +29,21 @@ public class Stage2Missile : MonoBehaviour
     bool isHit;
 
     CapsuleCollider capsule;
+    AudioSource audio;
     void OnEnable() {
+        secondEnemy.OnPhase3Change += this.Boom;
         selfBoomCurTime = 0;
         isHit = false;
+    }
+    void OnDisable() {
+        secondEnemy.OnPhase3Change -= this.Boom;
     }
     private void Awake() {
         enemy = GameObject.Find("UFO").GetComponent<secondEnemy>();
         target = GameObject.Find("Player").transform;
         rigid = GetComponent<Rigidbody>();
         capsule = transform.GetChild(0).GetComponent<CapsuleCollider>();
+        audio = GetComponent<AudioSource>();
 
         cam = Camera.main.transform;
         turningForce = 5;
@@ -221,6 +227,7 @@ public class Stage2Missile : MonoBehaviour
         }
     }
     IEnumerator Control() {
+        audio.Play();
         target.GetComponent<Rigidbody>().constraints = ~(RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionZ);
         Vector3 vec = transform.localEulerAngles;
         vec.x = -60f;

@@ -14,7 +14,14 @@ public class Stage2Pattern2Projectile : MonoBehaviour
     GameObject particle;
     Material mat;
     SphereCollider col;
-    
+
+    [SerializeField]
+    AudioClip shotClip;
+    [SerializeField]
+    AudioClip groundClip;
+
+    AudioSource audio;
+
     private void OnEnable() {
         mat.color = new Color32(224, 54, 54,255);
         particle.SetActive(true);
@@ -27,6 +34,7 @@ public class Stage2Pattern2Projectile : MonoBehaviour
         particle = transform.GetChild(1).gameObject;
         mat = GetComponent<MeshRenderer>().material;
         col = GetComponent<SphereCollider>();
+        audio = GetComponent<AudioSource>();
     }
     void Update() {
         colliderDisableTime += Time.deltaTime;
@@ -43,6 +51,9 @@ public class Stage2Pattern2Projectile : MonoBehaviour
     void OnTriggerEnter(Collider other) {
         if (!scaleCoroutine) {
             if (other.CompareTag("Ground")) {
+                audio.clip = groundClip;
+                audio.pitch = 3;
+                audio.Play();
                 particle.SetActive(false);
                 StartCoroutine(ScaleUp());
             }
@@ -76,6 +87,7 @@ public class Stage2Pattern2Projectile : MonoBehaviour
         transform.localScale = Vector3.one;
         particle.SetActive(true);
         ObjectManager.instance.ReturnObject(gameObject, "st2Pattern2");
-
+        audio.clip = shotClip;
+        audio.pitch = 1;
     }
 }

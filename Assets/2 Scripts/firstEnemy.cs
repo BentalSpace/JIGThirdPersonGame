@@ -117,8 +117,13 @@ public class firstEnemy : MonoBehaviour {
         //StartCoroutine(Pattern3(dangerZone));
     }
     void Update() {
-        if (isGameClear)
+        if (isGameClear || Time.timeScale == 0) {
+            AudioListener.pause = true;
             return;
+        }
+        else {
+            AudioListener.pause = false;
+        }
         pattern1CurTime += Time.deltaTime;
         // 땅 확인
         int layerMask = 1 << 6;
@@ -562,7 +567,7 @@ public class firstEnemy : MonoBehaviour {
         knife.GetComponent<EnemyAttack>().isAtkTime = true;
         yield return new WaitForSeconds(0.5f);
         // 날을 돌림
-        float power = 0.05f;
+        float power = 10;
         itemAudio.clip = pattern3RotClip;
         itemAudio.loop = true;
         itemAudio.Play();
@@ -573,18 +578,18 @@ public class firstEnemy : MonoBehaviour {
             Debug.Log(power);
             time += Time.deltaTime;
             progress += Time.deltaTime;
-            knife.Rotate(Vector3.up * power);
+            knife.Rotate(Vector3.up * power * Time.deltaTime);
             if (progress < 3f) {
                 if (time > 0.3f) {
-                    if (power < 0.45f)
-                        power += 0.05f;
+                    if (power < 150)
+                        power += 10;
                     time = 0;
                 }
             }
             if (progress > randTime-2) {
                 if (time > 0.2f) {
-                    if (power > 0.05f)
-                        power -= 0.05f;
+                    if (power > 0)
+                        power -= 10;
                     time = 0;
                 }
             }
@@ -656,7 +661,7 @@ public class firstEnemy : MonoBehaviour {
         itemAudio.clip = pattern3RotClip;
         itemAudio.loop = true;
         itemAudio.Play();
-        float power = 0.05f;
+        float power = 10;
         progress = 0;
         float time = 0;
         float randTime = Random.Range(9.5f, 11);
@@ -664,18 +669,18 @@ public class firstEnemy : MonoBehaviour {
             Debug.Log(power);
             time += Time.deltaTime;
             progress += Time.deltaTime;
-            knife.Rotate(Vector3.up * power);
+            knife.Rotate(Vector3.up * power * Time.deltaTime);
             if (progress < 3f) {
                 if (time > 0.3f) {
-                    if (power < 0.45f)
-                        power += 0.05f;
+                    if (power < 150)
+                        power += 10;
                     time = 0;
                 }
             }
             if (progress > randTime - 2) {
                 if (time > 0.2f) {
-                    if (power > 0.05f)
-                        power -= 0.05f;
+                    if (power > 0)
+                        power -= 10;
                     time = 0;
                 }
             }

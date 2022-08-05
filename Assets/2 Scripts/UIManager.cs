@@ -10,6 +10,20 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     GameObject[] panels;
 
+    // ¿Œ∆Æ∑Œ
+    GameObject startPanel;
+    Animator anim;
+
+    private void Awake() {
+        if(SceneManager.GetActiveScene().buildIndex == 0) {
+            startPanel = GameObject.Find("StartPanel");
+            anim = GameObject.Find("Char").GetComponent<Animator>();
+        }
+    }
+    private void Start() {
+        if(SceneManager.GetActiveScene().buildIndex == 0)
+            startPanel.SetActive(false);
+    }
     void Update() {
         foreach(GameObject panel in panels) {
             if (panel.activeSelf)
@@ -45,5 +59,23 @@ public class UIManager : MonoBehaviour
     public void MainBtn() {
         SceneManager.LoadScene(0);
         Time.timeScale = 1;
+    }
+
+    public void GameStartBtn() {
+        startPanel.SetActive(true);
+        anim.SetBool("Start", true);
+    }
+    public void GameStartCancelBtn() {
+        startPanel.SetActive(false);
+        anim.SetBool("Start", false);
+    }
+    public void GoBattle(int scene) {
+        anim.SetTrigger("Go");
+        StartCoroutine(GoBattle2(scene));
+    }
+
+    IEnumerator GoBattle2(int scene) {
+        yield return new WaitForSeconds(2f);
+        SceneManager.LoadScene(scene);
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
 public class secondEnemy : MonoBehaviour
 {
@@ -10,8 +11,6 @@ public class secondEnemy : MonoBehaviour
      * 페이즈2 : 체력이 60(미사일 2대 맞추기)이 될때까지, 패턴3 공격 (미사일은 일정시간 간격으로 맵에 배치 되는 개수는 3개 이하), 미사일의 공격력은 30
      * 페이즈3 : 강화 패턴2 사용, (일정시간 간격으로)우주선 찍기 공격.(찍으면 그 자리에 지속피해를 주는 장판 생성.) 3번 -> 미사일공격2개 -> 3번 찍기 -> 패턴1(사용 후 터뜨리면 회전 정지) -> 3번 찍기 -> 미사일 -> 3번 찍기 -> 패턴1 (그 와중에 강화패턴2는 지속적으로 실행)
     */
-    [SerializeField]
-    GameObject fire;
     Transform target;
     [SerializeField]
     Transform laserPos;
@@ -19,6 +18,9 @@ public class secondEnemy : MonoBehaviour
     Transform laserDoublePos;
     [SerializeField]
     GameObject laser;
+
+    GameObject gameClearPanel;
+    bool isGameClear;
 
     int phase;
     int phase1Cnt;
@@ -31,6 +33,7 @@ public class secondEnemy : MonoBehaviour
     float targetHp;
 
     // 패턴1 관리 변수
+    AudioSource laserChaseAudio;
     public bool doPattern1;
     float pattern1EffectTime;
     float pattern1DmgTime;
@@ -42,6 +45,10 @@ public class secondEnemy : MonoBehaviour
     int savePos;
 
     // 패턴2 관리 변수
+    [SerializeField]
+    AudioClip laserLengthClip;
+    [SerializeField]
+    AudioClip laserRotClip;
     public bool doPattern2;
     bool pattern2Ending;
     Transform pattern2Tr;
@@ -69,6 +76,7 @@ public class secondEnemy : MonoBehaviour
     float[] pattern2PlusSmallDis = new float[3];
     float[] pattern2PlusDmgTime = new float[3];
     bool isRotate;
+    AudioSource[] pattern2PlusAudio = new AudioSource[3];
 
     // 패턴3
     [SerializeField]
@@ -77,7 +85,8 @@ public class secondEnemy : MonoBehaviour
     Rigidbody rigid;
 
     bool phaseChange;
-
+    public delegate void Phase3ChangeHandler();
+    public static event Phase3ChangeHandler OnPhase3Change;
     void Awake() {
         rigid = GetComponent<Rigidbody>();
         target = GameObject.Find("Player").transform;
@@ -87,8 +96,12 @@ public class secondEnemy : MonoBehaviour
             pattern2Laser[i++] = tr;
         }
         pattern2PlusTr[0] = GameObject.Find("UFOPattern2Plus 1").transform;
+        pattern2PlusAudio[0] = pattern2PlusTr[0].GetComponent<AudioSource>();
         pattern2PlusTr[1] = GameObject.Find("UFOPattern2Plus 2").transform;
+        pattern2PlusAudio[1] = pattern2PlusTr[1].GetComponent<AudioSource>();
         pattern2PlusTr[2] = GameObject.Find("UFOPattern2Plus 3").transform;
+        pattern2PlusAudio[2] = pattern2PlusTr[2].GetComponent<AudioSource>();
+        laserChaseAudio = laserPos.GetComponent<AudioSource>();
         i = 0;
         for (int j = 0; j < pattern2PlusTr.Length; j++) {
             foreach (Transform tr in pattern2PlusTr[j].GetChild(0).transform) {
@@ -102,7 +115,7 @@ public class secondEnemy : MonoBehaviour
         pattern2RotPower = 0.01f;
         savePos = 999;
 
-        phase = 3;
+        phase = 1;
         phase1Cnt = 0;
         phase2Cnt = 0;
         phase3Cnt = 0;
@@ -117,8 +130,11 @@ public class secondEnemy : MonoBehaviour
         pattern2PlusObjCnt = 0;
 
         phaseChange = false;
+
+        gameClearPanel = GameObject.Find("GameClearPanel");
     }
     void Start() {
+        gameClearPanel.SetActive(false);
         laser.SetActive(false);
         // 패턴1
         //StartCoroutine(Pattern1Frame());
@@ -140,7 +156,14 @@ public class secondEnemy : MonoBehaviour
         //StartCoroutine(DownAtk());
     }
     void Update() {
-        if(phase == 1) {
+        if (Time.timeScale == 0 || isGameClear) {
+            AudioListener.pause = true;
+            return;
+        }
+        else {
+            AudioListener.pause = false;
+        }
+        if (phase == 1) {
             targetHp = 120;
             if(phase1Cnt == 0) {
                 StartCoroutine(Pattern1Frame());
@@ -157,7 +180,6 @@ public class secondEnemy : MonoBehaviour
         }
         else if(phase == 2) {
             phase2FirstTime += Time.deltaTime;
-            Debug.Log(phase2FirstTime);
             targetHp = 60;
             if (phase2Cnt == 0) {
                 if (phase2FirstTime > 5) {
@@ -218,6 +240,9 @@ public class secondEnemy : MonoBehaviour
 
         // 패턴2plus
         if (doPattern2Plus) {
+            if (pattern2Tr.GetComponent<AudioSource>().time > 2.7f) {
+                pattern2Tr.GetComponent<AudioSource>().time = 0.8f;
+            }
             // 10초 후부터 찍기공격  | 10초 후 십자레이저 1개 추가 | 10초 후 십자레이저 추가 | 10초 후 십자레이저 추가.
             pattern2DmgTime += Time.deltaTime;
             pattern2PlusTime += Time.deltaTime;
@@ -230,12 +255,12 @@ public class secondEnemy : MonoBehaviour
 
             //회전
             if (isRotate) {
-                pattern2Tr.Rotate(Vector3.up * pattern2RotPower);
+                pattern2Tr.Rotate(Vector3.up * pattern2RotPower * Time.deltaTime);
                 // 작은애들 회전
                 for (int i = 0; i < pattern2PlusObjCnt; i++) {
                     if (!dopattern2PlusSmall[i])
                         break;
-                    pattern2PlusTr[i].Rotate(Vector3.up * pattern2PlusSmallRotPower[i]);
+                    pattern2PlusTr[i].Rotate(Vector3.up * pattern2PlusSmallRotPower[i] * Time.deltaTime);
                 }
             }
             
@@ -246,6 +271,7 @@ public class secondEnemy : MonoBehaviour
                     tr.localScale = new Vector3(1, 1, hit.distance / 2);
                     if (pattern2DmgTime > 0.1f) {
                         if (hit.collider.CompareTag("Player")) {
+                            StartCoroutine(Pattern1(hit));
                             pattern2DmgTime = 0;
                             hit.collider.GetComponent<PlayerCtrl>().HpDown(5f);
                         }
@@ -263,6 +289,7 @@ public class secondEnemy : MonoBehaviour
                     pattern2PlusLaser[i].localScale = new Vector3(1, 1, hit.distance / 2);
                     if(pattern2PlusDmgTime[i / 4] > 0.3f) {
                         if (hit.collider.CompareTag("Player")) {
+                            StartCoroutine(Pattern1(hit));
                             pattern2PlusDmgTime[i / 4] = 0;
                             hit.collider.GetComponent<PlayerCtrl>().HpDown(5);
                         }
@@ -290,11 +317,33 @@ public class secondEnemy : MonoBehaviour
                 //if (!phaseChange)
                 //    StartCoroutine(PhaseChange());
             }
+            else if(phase == 2) {
+                OnPhase3Change();
+                phase++;
+            }
             else {
                 phase++;
             }
+
+            if(hp <= 0) {
+                phase++;
+                gameClearPanel.SetActive(true);
+                int m = (int)GameManager.gameTime / 60;
+                int s = (int)GameManager.gameTime % 60;
+                gameClearPanel.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"클리어에 걸린 시간 : {m}m {s}s";
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                isGameClear = true;
+                Invoke("GameClear", 2.0f);
+            }
         }
     }
+
+    void GameClear() {
+        Time.timeScale = 0;
+        CamCtrl.dontCtrl = true;
+    }
+
     IEnumerator PhaseChange() {
         phaseChange = true;
         yield return new WaitForSeconds(5f);
@@ -305,6 +354,9 @@ public class secondEnemy : MonoBehaviour
         // 패턴1
         // 시작할때 laser의 setactive를 true로 변경해줘야 함.
         if (doPattern1 && !PlayerCtrl.dontCtrl) {
+            if(laserChaseAudio.time > 3) {
+                laserChaseAudio.time = 1.0f;
+            }
             pattern1EffectTime += Time.deltaTime;
             pattern1DmgTime += Time.deltaTime;
             // 플레이어의 몸통방향을 목표로. 그리고 점프를 해도 점프값은 신경쓰지 않도록.
@@ -320,29 +372,32 @@ public class secondEnemy : MonoBehaviour
             // 천천히 이동중인 그 위치로 레이를 쏨.
             Physics.Raycast(laserPos.position, laserPos.forward, out hit, 300, layerMask);
             //레이저의 길이를 레이를 맞춘 거리만큼 늘림. 
-            laser.transform.localScale = new Vector3(1f, hit.distance / 2, 1f);
-            if (pattern1EffectTime > 0.1f) {
-                pattern1EffectTime = 0;
-                StartCoroutine(Pattern1(hit));
-            }
-            if (pattern1DmgTime > 0.1f) {
-                if (hit.collider.CompareTag("Player")) {
-                    pattern1DmgTime = 0;
-                    hit.collider.GetComponent<PlayerCtrl>().HpDown(0.2f);
+            if (hit.collider) {
+                laser.transform.localScale = new Vector3(1f, hit.distance / 2, 1f);
+                if (pattern1EffectTime > 0.1f) {
+                    pattern1EffectTime = 0;
+                    StartCoroutine(Pattern1(hit));
                 }
-                if (hit.collider.CompareTag("Puzzle")) {
+                if (pattern1DmgTime > 0.1f) {
+                    if (hit.collider.CompareTag("Player")) {
+                        pattern1DmgTime = 0;
+                        hit.collider.GetComponent<PlayerCtrl>().HpDown(0.2f);
+                    }
+                    if (hit.collider.CompareTag("Puzzle")) {
 
-                    //타격 (스턴)
-                    pattern1DmgTime = 0;
-                    doPattern1 = false;
-                    pattern1PuzzleEffect.transform.position = hit.collider.transform.position;
-                    pattern1PuzzleEffect.SetActive(true);
-                    laser.SetActive(false);
-                    StartCoroutine(Camera.main.GetComponent<Shake>().ShakeCamera(0.2f, 1f));
-                    hit.collider.GetComponent<Stage2Pattern1>().Hit();
-                    rigid.AddForce(Vector3.down * 20f, ForceMode.VelocityChange);
-                    isRotate = false;
-                    StartCoroutine(WakeUp());
+                        //타격 (스턴)
+                        laserChaseAudio.Stop();
+                        pattern1DmgTime = 0;
+                        doPattern1 = false;
+                        pattern1PuzzleEffect.transform.position = hit.collider.transform.position;
+                        pattern1PuzzleEffect.SetActive(true);
+                        laser.SetActive(false);
+                        StartCoroutine(Camera.main.GetComponent<Shake>().ShakeCamera(0.2f, 1f));
+                        hit.collider.GetComponent<Stage2Pattern1>().Hit();
+                        rigid.AddForce(Vector3.down * 20f, ForceMode.VelocityChange);
+                        isRotate = false;
+                        StartCoroutine(WakeUp());
+                    }
                 }
             }
         }
@@ -350,6 +405,11 @@ public class secondEnemy : MonoBehaviour
     public void Pattern2Update() {
         // 패턴 2
         if (doPattern2) {
+            if (!pattern2Ending) {
+                if (pattern2Tr.GetComponent<AudioSource>().time > 2.7f) {
+                    pattern2Tr.GetComponent<AudioSource>().time = 0.8f;
+                }
+            }
             pattern2DmgTime += Time.deltaTime;
             pattern2ProjectileTime += Time.deltaTime;
             // 레이저에 적이 있다면, 길이 조절.
@@ -360,6 +420,7 @@ public class secondEnemy : MonoBehaviour
                     tr.localScale = new Vector3(1, 1, hit.distance / 2);
                     if (pattern2DmgTime > 0.5f) {
                         if (hit.collider.CompareTag("Player")) {
+                            StartCoroutine(Pattern1(hit));
                             pattern2DmgTime = 0;
                             hit.collider.GetComponent<PlayerCtrl>().HpDown(10f);
                         }
@@ -381,7 +442,7 @@ public class secondEnemy : MonoBehaviour
                 StartCoroutine(Pattern2ProjectileCtrl(projectile.GetComponent<Rigidbody>(), dis));
             }
             //회전
-            pattern2Tr.Rotate(Vector3.up * pattern2RotPower);
+            pattern2Tr.Rotate(Vector3.up * pattern2RotPower * Time.deltaTime);
             if (pattern2RotTime > 15 && !pattern2Ending) {
                 // 패턴2 종료
                 StartCoroutine(Pattern2End());
@@ -465,6 +526,8 @@ public class secondEnemy : MonoBehaviour
         pattern1PuzzleObj[1].SetActive(true);
 
         yield return new WaitForSeconds(waitTime);
+        laserChaseAudio.Play();
+        laserChaseAudio.time = 0.2f;
         doPattern1 = true;
     }
     IEnumerator Pattern3Frame(float missileCnt) {
@@ -507,15 +570,28 @@ public class secondEnemy : MonoBehaviour
         }
         float maxDistance = 120;
         progress = 0;
-        while(progress < 1) {
+
+        // 레이저를 늘림.
+        AudioSource pattern2Audio = pattern2Tr.GetComponent<AudioSource>();
+        pattern2Audio.clip = laserLengthClip;
+        pattern2Audio.Play();
+        while (progress < 1) {
+            if (!doPattern2) {
+                if (pattern2Audio.time > 4) {
+                    pattern2Audio.time = 1;
+                }
+            }
             progress += 0.005f;
             if(progress > 0.5f && !doPattern2) {
+                pattern2Audio.clip = laserRotClip;
+                pattern2Audio.Play();
                 doPattern2 = true;
             }
             // progress가 1일때, 0.1이 되도록
             // progress가 0.5면 0.01이다.
-            pattern2RotPower = progress * 0.15f;
+            pattern2RotPower = progress * 50;
             pattern2Dis = maxDistance * (progress / 1);
+
             foreach (Transform tr in pattern2Laser) {
                 Physics.Raycast(tr.position, tr.forward, out RaycastHit hit, pattern2Dis, (1 << 3) + (1 << 6));
                 if (hit.collider) {
@@ -538,13 +614,34 @@ public class secondEnemy : MonoBehaviour
     IEnumerator Pattern2End() {
         pattern2Ending = true;
         float progress = 1;
+
+        // 레이저 길이 감소
+        AudioSource pattern2Audio = pattern2Tr.GetComponent<AudioSource>();
+        bool audioCheck = false;
+        bool end = false;
         while (progress > 0) {
             progress -= 0.005f;
             //if (progress > 0.5f && !doPattern2) {
             //    doPattern2 = true;
             //}
-            pattern2RotPower = progress * 0.1f; 
+            pattern2RotPower = progress * 50; 
             pattern2Dis = 120 * (progress / 1);
+            if(progress < 0.8f && !audioCheck) {
+                audioCheck = true;
+                pattern2Audio.clip = laserLengthClip;
+                pattern2Audio.Play();
+                pattern2Audio.time = 1f;
+            }
+            if (progress < 0.1f && !end) {
+                end = true;
+                pattern2Audio.time = 4.5f;
+            }
+            else if (audioCheck && !end) {
+                if(pattern2Audio.time > 3.7f) {
+                    pattern2Audio.time = 1f;
+                }
+            }
+            
             foreach (Transform tr in pattern2Laser) {
                 if (progress <= 0) {
                     pattern2Dis = 0;
@@ -592,14 +689,26 @@ public class secondEnemy : MonoBehaviour
         }
         float maxDistance = 120;
         progress = 0;
+
+        // 레이저를 늘림
+        AudioSource pattern2Audio = pattern2Tr.GetComponent<AudioSource>();
+        pattern2Audio.clip = laserLengthClip;
+        pattern2Audio.Play();
         while (progress < 1) {
+            if (!doPattern2Plus){
+                if (pattern2Audio.time > 4) {
+                    pattern2Audio.time = 1;
+                }
+            }
             progress += 0.005f;
             if (progress > 0.5f && !doPattern2Plus) {
+                pattern2Audio.clip = laserRotClip;
+                pattern2Audio.Play();
                 doPattern2Plus = true;
             }
             // progress가 1일때, 0.1이 되도록
             // progress가 0.5면 0.01이다.
-            pattern2RotPower = progress * 0.1f;
+            pattern2RotPower = progress * 35;
             pattern2Dis = maxDistance * (progress / 1);
             foreach (Transform tr in pattern2Laser) {
                 Physics.Raycast(tr.position, tr.forward, out RaycastHit hit, pattern2Dis, (1 << 3) + (1 << 6));
@@ -628,14 +737,41 @@ public class secondEnemy : MonoBehaviour
         }
         float maxDistance = 200;
         progress = 0;
-        while(progress < 1) {
+
+        //AudioSource pattern2Audio = pattern2Tr.GetComponent<AudioSource>();
+        //pattern2Audio.clip = laserLengthClip;
+        //pattern2Audio.Play();
+        //while (progress < 1) {
+        //    if (!doPattern2Plus) {
+        //        if (pattern2Audio.time > 4) {
+        //            pattern2Audio.time = 1;
+        //        }
+        //    }
+        //    progress += 0.005f;
+        //    if (progress > 0.5f && !doPattern2Plus) {
+        //        pattern2Audio.clip = laserRotClip;
+        //        pattern2Audio.Play();
+        //        doPattern2Plus = true;
+        //    }
+
+        // 레이저를 늘림
+        pattern2PlusAudio[num].clip = laserLengthClip;
+        pattern2PlusAudio[num].Play();
+        while (progress < 1) {
+            if (!dopattern2PlusSmall[num]) {
+                if (pattern2PlusAudio[num].time > 4) {
+                    pattern2PlusAudio[num].time = 1;
+                }
+            }
             progress += 0.005f;
             // 돌리는 조건
             if(progress > 0.5f && !dopattern2PlusSmall[num]) {
+                pattern2PlusAudio[num].clip = laserRotClip;
+                pattern2PlusAudio[num].Play();
                 dopattern2PlusSmall[num] = true;
             }
             // 최종 속도는 0.05
-            pattern2PlusSmallRotPower[num] = progress * 0.05f;
+            pattern2PlusSmallRotPower[num] = progress * 25;
             pattern2PlusSmallDis[num] = maxDistance * (progress / 1);
             for(int i = 4 * num; i < (4 * num) + 4; i++) {
                 Physics.Raycast(pattern2PlusLaser[i].position, pattern2PlusLaser[i].forward, out RaycastHit hit, pattern2PlusSmallDis[num], (1 << 3) + (1 << 6));
@@ -658,7 +794,6 @@ public class secondEnemy : MonoBehaviour
             progress = 0;
             while (progress < 1) {
                 progress += 0.016f;
-                Debug.Log("TEST " + transform.position);
                 transform.position = Vector3.Lerp(origin, new Vector3(target.position.x, origin.y, target.position.z), progress);
                 // 66번 반복?
                 yield return new WaitForSeconds(0.03f);
@@ -686,7 +821,8 @@ public class secondEnemy : MonoBehaviour
                 }
                 yield return new WaitForSeconds(0.01f);
             }
-            Instantiate(fire, transform.position + Vector3.down * 0.05f, Quaternion.identity);
+            GameObject downAtk = ObjectManager.instance.GetObject("downAtk");
+            downAtk.transform.position = transform.position + Vector3.down * 0.05f;
             yield return new WaitForSeconds(0.5f);
             progress = 0;
             Vector3 vec = transform.position;
