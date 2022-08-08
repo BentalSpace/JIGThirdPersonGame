@@ -156,10 +156,12 @@ public class secondEnemy : MonoBehaviour
         //StartCoroutine(DownAtk());
     }
     void Update() {
-        if (Time.timeScale == 0 || isGameClear) {
+        if (Time.timeScale == 0) {
             AudioListener.pause = true;
             return;
         }
+        if (isGameClear)
+            return;
         else {
             AudioListener.pause = false;
         }
@@ -327,19 +329,24 @@ public class secondEnemy : MonoBehaviour
 
             if(hp <= 0) {
                 phase++;
-                gameClearPanel.SetActive(true);
-                int m = (int)GameManager.gameTime / 60;
-                int s = (int)GameManager.gameTime % 60;
-                gameClearPanel.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"클리어에 걸린 시간 : {m}m {s}s";
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                target.GetComponent<PlayerCtrl>().Victory();
+                Camera.main.GetComponent<CamCtrl>().ProductionReady();
                 isGameClear = true;
-                Invoke("GameClear", 2.0f);
+                StartCoroutine(GameClear());
             }
         }
     }
 
-    void GameClear() {
+    IEnumerator GameClear() {
+        yield return new WaitForSeconds(3.0f);
+        int m = (int)GameManager.gameTime / 60;
+        int s = (int)GameManager.gameTime % 60;
+        gameClearPanel.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"클리어에 걸린 시간 : {m}m {s}s";
+        gameClearPanel.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        yield return new WaitForSeconds(20.0f);
         Time.timeScale = 0;
         CamCtrl.dontCtrl = true;
     }

@@ -10,6 +10,7 @@ public class CamCtrl : MonoBehaviour
 
     public static bool dontCtrl;
     public static bool dontLimit;
+    public static bool isSpecialProduction;
 
     [SerializeField, Tooltip("카메라와 타겟의 거리")]
     float distance;
@@ -22,8 +23,12 @@ public class CamCtrl : MonoBehaviour
     void Awake() {
         target = GameObject.Find("Player").transform;
         dontCtrl = false;
+
+        isSpecialProduction = false;
+        distance = 15;
     }
     void Update() {
+        SpecialProduction();
         if (!dontCtrl) {
             LookAround();
             camDistanceCtrl();
@@ -70,5 +75,20 @@ public class CamCtrl : MonoBehaviour
         }
 
         transform.rotation = Quaternion.Euler(x, camAngle.y + (mouseDelta.x * ySensitivity), camAngle.z) ;
+    }
+    public void ProductionReady() {
+        dontCtrl = true;
+        transform.localEulerAngles = new Vector3(20, transform.localEulerAngles.y, 0);
+        distance = 5;
+        isSpecialProduction = true;
+    }
+    void SpecialProduction() {
+        if (!isSpecialProduction)
+            return;
+        transform.localEulerAngles = new Vector3(20, transform.localEulerAngles.y, 0);
+        transform.RotateAround(target.position, Vector3.up, 10 * Time.deltaTime);
+        distance = 5f;
+        Vector3 reserveDistance = new Vector3(0, 0, distance);
+        transform.position = target.transform.position - transform.rotation * reserveDistance + (Vector3.up * 1);
     }
 }

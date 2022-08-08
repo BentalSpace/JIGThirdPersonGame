@@ -47,6 +47,7 @@ public class PlayerCtrl : MonoBehaviour
     Animator anim;
 
     void Awake() {
+        Application.targetFrameRate = 60;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -300,6 +301,10 @@ public class PlayerCtrl : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
         Time.timeScale = 0;
+    }
+    public void Victory() {
+        dontCtrl = true;
+        anim.SetTrigger("Victory");
     }
     void OnDrawGizmos() {
         //int layerMask = 1 << 3;

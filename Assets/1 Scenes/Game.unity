@@ -1035,6 +1035,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 564172500}
   m_CullTransparentMesh: 1
+--- !u!1 &583153297
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 583153299}
+  - component: {fileID: 583153298}
+  m_Layer: 0
+  m_Name: FPS
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &583153298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 583153297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0402b42ce51b6854f9d5f197905c2702, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  fFont_Size: 50
+  R: 0
+  G: 0
+  B: 0
+--- !u!4 &583153299
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 583153297}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 12.02, y: 154.1, z: 10.21}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 11
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &631048098
 GameObject:
   m_ObjectHideFlags: 0
@@ -1979,11 +2027,11 @@ MonoBehaviour:
       - m_Target: {fileID: 1168229366}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: RetryBtn
-        m_Mode: 1
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -2147,6 +2195,7 @@ MonoBehaviour:
   panels:
   - {fileID: 148575561}
   - {fileID: 536115184}
+  bgm: {fileID: 0}
 --- !u!1 &1240315430 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2221057154063820148, guid: e2355db6ed9d2434a8a0d88fdb65903a, type: 3}
@@ -3120,11 +3169,11 @@ MonoBehaviour:
       - m_Target: {fileID: 1168229366}
         m_TargetAssemblyTypeName: UIManager, Assembly-CSharp
         m_MethodName: RetryBtn
-        m_Mode: 1
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
+          m_IntArgument: 1
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0

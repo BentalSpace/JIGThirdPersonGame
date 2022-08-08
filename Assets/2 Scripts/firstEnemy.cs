@@ -117,10 +117,12 @@ public class firstEnemy : MonoBehaviour {
         //StartCoroutine(Pattern3(dangerZone));
     }
     void Update() {
-        if (isGameClear || Time.timeScale == 0) {
+        if (Time.timeScale == 0) {
             AudioListener.pause = true;
             return;
         }
+        if (isGameClear)
+            return;
         else {
             AudioListener.pause = false;
         }
@@ -191,14 +193,8 @@ public class firstEnemy : MonoBehaviour {
                 if (hp <= 0) {
                     phase++;
                     anim.SetTrigger("Die");
-                    gameClearPanel.SetActive(true);
-                    int m = (int)GameManager.gameTime / 60;
-                    int s = (int)GameManager.gameTime % 60;
-                    gameClearPanel.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"클리어에 걸린 시간 : {m}m {s}s";
-                    Cursor.lockState = CursorLockMode.None;
-                    Cursor.visible = true;
                     isGameClear = true;
-                    Invoke("GameClear", 2.0f);
+                    StartCoroutine(GameClear());
                 }
                 else {
                     Invoke("GoUp", 1.0f);
@@ -228,7 +224,19 @@ public class firstEnemy : MonoBehaviour {
             }
         }
     }
-    void GameClear() {
+    IEnumerator GameClear() {
+        yield return new WaitForSeconds(1f);
+        target.GetComponent<PlayerCtrl>().Victory();
+        Camera.main.GetComponent<CamCtrl>().ProductionReady();
+        yield return new WaitForSeconds(3.0f);
+        int m = (int)GameManager.gameTime / 60;
+        int s = (int)GameManager.gameTime % 60;
+        gameClearPanel.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = $"클리어에 걸린 시간 : {m}m {s}s";
+        gameClearPanel.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        yield return new WaitForSeconds(20.0f);
         Time.timeScale = 0;
         CamCtrl.dontCtrl = true;
     }
@@ -448,9 +456,10 @@ public class firstEnemy : MonoBehaviour {
         for (int i = 0; i < 3; i++) {
             progress = 0;
             zone.SetActive(true);
-            while (progress < downTime) {
-                progress += 0.01f;
+            while (progress < 1) {
+                progress += Time.deltaTime;
                 zone.transform.position = new Vector3(target.position.x, zone.transform.position.y, target.position.z);
+                Debug.Log(progress);
                 yield return null;
             }
             zone.SetActive(false);
@@ -499,13 +508,13 @@ public class firstEnemy : MonoBehaviour {
         progress = 0;
         zone.SetActive(true);
         while (progress < 1) {
-            progress += 0.01f;
+            progress += Time.deltaTime * 3;
             zone.transform.position = new Vector3(target.position.x, zone.transform.position.y, target.position.z);
             yield return null;
         }
         transform.position = new Vector3(zone.transform.position.x, target.position.y + 20f, zone.transform.position.z);
         zone.SetActive(false);
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.15f);
         rigid.AddForce(Vector3.down * 100, ForceMode.VelocityChange);
 
         while (true) {
@@ -559,7 +568,7 @@ public class firstEnemy : MonoBehaviour {
         progress = 0;
         Transform knife = item.transform.GetChild(1);
         while (progress < 1) {
-            progress += 0.01f;
+            progress += Time.deltaTime * 1.5f;
             knife.localScale = Vector3.Lerp(new Vector3(5, 0.2f, 3), new Vector3(100, 0.2f, 3), progress);
             yield return null;
         }
@@ -575,7 +584,6 @@ public class firstEnemy : MonoBehaviour {
         float time = 0;
         float randTime = Random.Range(9.5f, 11);
         while (progress < randTime) {
-            Debug.Log(power);
             time += Time.deltaTime;
             progress += Time.deltaTime;
             knife.Rotate(Vector3.up * power * Time.deltaTime);
@@ -604,7 +612,7 @@ public class firstEnemy : MonoBehaviour {
         knife.GetComponent<EnemyAttack>().isAtkTime = false;
         progress = 0;
         while (progress < 1) {
-            progress += 0.01f;
+            progress += Time.deltaTime * 1.5f;
             knife.localScale = Vector3.Lerp(new Vector3(100, 0.2f, 3), new Vector3(5, 0.2f, 3), progress);
             yield return null;
         }
@@ -648,7 +656,7 @@ public class firstEnemy : MonoBehaviour {
         progress = 0;
         Transform knife = item.transform.GetChild(1);
         while (progress < 1) {
-            progress += 0.01f;
+            progress += Time.deltaTime * 1.5f;
             knife.localScale = Vector3.Lerp(new Vector3(5, 0.2f, 3), new Vector3(100, 0.2f, 3), progress);
             yield return null;
         }
@@ -696,7 +704,7 @@ public class firstEnemy : MonoBehaviour {
         knife.GetComponent<EnemyAttack>().isAtkTime = false;
         progress = 0;
         while (progress < 1) {
-            progress += 0.01f;
+            progress += Time.deltaTime * 1.5f;
             knife.localScale = Vector3.Lerp(new Vector3(100, 0.2f, 3), new Vector3(5, 0.2f, 3), progress);
             yield return null;
         }

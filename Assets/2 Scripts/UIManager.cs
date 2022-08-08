@@ -9,20 +9,25 @@ public class UIManager : MonoBehaviour
     GameObject escPanel;
     [SerializeField]
     GameObject[] panels;
-
+    [SerializeField]
+    GameObject bgm;
     // ¿Œ∆Æ∑Œ
     GameObject startPanel;
+    GameObject optionPanel;
     Animator anim;
 
     private void Awake() {
         if(SceneManager.GetActiveScene().buildIndex == 0) {
             startPanel = GameObject.Find("StartPanel");
+            optionPanel = GameObject.Find("OptionPanel");
             anim = GameObject.Find("Char").GetComponent<Animator>();
         }
     }
     private void Start() {
-        if(SceneManager.GetActiveScene().buildIndex == 0)
+        if (SceneManager.GetActiveScene().buildIndex == 0) {
             startPanel.SetActive(false);
+            optionPanel.SetActive(false);
+        }
     }
     void Update() {
         foreach(GameObject panel in panels) {
@@ -52,15 +57,20 @@ public class UIManager : MonoBehaviour
     public  void QuitBtn() {
         Application.Quit();
     }
-    public void RetryBtn() {
-        SceneManager.LoadScene(1);
+    public void RetryBtn(int sceneNum) {
+        LoadingSceneManager.LoadScene(sceneNum);
         Time.timeScale = 1;
     }
     public void MainBtn() {
         SceneManager.LoadScene(0);
         Time.timeScale = 1;
     }
-
+    public void OptionBtn() {
+        optionPanel.SetActive(true);
+    }
+    public void OptionCancelBtn() {
+        optionPanel.SetActive(false);
+    }
     public void GameStartBtn() {
         startPanel.SetActive(true);
         anim.SetBool("Start", true);
@@ -76,6 +86,8 @@ public class UIManager : MonoBehaviour
 
     IEnumerator GoBattle2(int scene) {
         yield return new WaitForSeconds(2f);
-        SceneManager.LoadScene(scene);
+        DontDestroyOnLoad(bgm);
+        LoadingSceneManager.LoadScene(scene);
+        //SceneManager.LoadScene(scene);
     }
 }
